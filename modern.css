@@ -411,7 +411,7 @@ footer hr {
   text-align:center;
   font-size:5em;
   padding-top: 0em;
-  margin-top: 0em
+  margin-top: 1em
 }
 
 .contact p {
@@ -450,7 +450,7 @@ footer hr {
 /* Go back */
 
 .goback {
-  background-color: #f3e2d8;
+  background-color: transparent;
   padding-top: 3em;
   padding-bottom: 0em;
 }
