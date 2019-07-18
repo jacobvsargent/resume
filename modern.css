@@ -50,7 +50,7 @@ header {
   -moz-background-size: cover;
   -o-background-size: cover;
   background-size: cover;
-  margin-bottom: 4em;
+  margin-bottom: 0em;
   text-align: center;
   height: 450px;
  
@@ -58,7 +58,7 @@ header {
 
 header h1 {
   color: white;
-  font-size: 2em;
+  font-size: 10em;
   margin: 0;
   letter-spacing: 1px;
   opacity: 1;
@@ -70,7 +70,7 @@ header h1 {
 
 header p {
   color: #fff;
-  font-size: 1.1em;
+  font-size: 1.5em;
   padding-bottom: 1.3em;
   padding-top: .5em;
   opacity: .9;
@@ -228,6 +228,22 @@ footer hr {
   border: none;
 }
 
+.experience a {
+  background-color: transparent;
+  border: 3px solid #e4382c;
+  padding: 7px 35px;
+  border-radius: 3px;
+  color: #e4382c;
+  font-size: 1.1em;
+  opacity: .8;
+  margin-bottom: 10px;
+}
+
+.experience a:hover {
+  background-color: #e4382c;
+  color: #ffffff;
+}
+
 @media screen and (min-width: 40em) {
   .experience h2, .experience p {
     text-align: left;
@@ -253,6 +269,11 @@ footer hr {
   font-size: 1.1em;
   opacity: .8;
   margin-bottom: 10px;
+}
+
+.education a:hover {
+  background-color: #e4382c;
+  color: #ffffff;
 }
 
 
@@ -282,6 +303,22 @@ footer hr {
   font-style: italic;
   color: #888;
   margin-top:  -15px;
+}
+
+.testimonial a {
+  background-color: transparent;
+  border: 3px solid #e4382c;
+  padding: 7px 35px;
+  border-radius: 3px;
+  color: #e4382c;
+  font-size: 1.1em;
+  opacity: .8;
+  margin-bottom: 10px;
+}
+
+.testimonial a:hover {
+  background-color: #e4382c;
+  color: #ffffff;
 }
 
 /* Spotlight */
@@ -322,8 +359,8 @@ footer hr {
 }
 
 .spotlight a:hover {
-  opacity: 1;
-  cursor: pointer;
+  background-color: #e4382c;
+  color: #ffffff;
 }
 
 @media screen and (min-width: 40em) {
