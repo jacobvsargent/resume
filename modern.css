@@ -275,6 +275,12 @@ footer hr {
   margin-bottom: 10px;
 }
 
+.education h3 {
+  font-size: 2em;
+  margin-bottom: 0em;
+  padding-bottom: 0em;
+}
+
 .education a:hover {
   background-color: #e4382c;
   color: #ffffff;
