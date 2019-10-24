@@ -245,6 +245,10 @@ footer hr {
   margin-bottom: 10px;
 }
 
+.grid-4 a {
+  font-style: none
+}
+
 .experience a:hover {
   background-color: #e4382c;
   color: #ffffff;
