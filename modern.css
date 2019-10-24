@@ -76,6 +76,8 @@ header p {
   opacity: .9;
   position: relative;
   top: 360px;
+  text-shadow: 0 3px 0 rgba(0,0,0, 0.5);
+  font-style: italic;
 }
 
 section h1 {
