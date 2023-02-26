@@ -60,7 +60,7 @@ header {
 
 header h1 {
   color: white;
-  font-size: 20em;
+  font-size: 5em;
   margin: 0;
   letter-spacing: 1px;
   opacity: 1;
@@ -115,7 +115,7 @@ footer hr {
 
 @media screen and (min-width: 50em) {
   header {
-    height: 700px;
+    height: 70em;
   }
   
   header h1 {
@@ -348,6 +348,7 @@ footer hr {
 .spotlight img {
   width: 60%;
   max-width: 250px;
+  max-height: 250px;
   margin-left: auto;
   margin-right: auto;
   display: block;
@@ -469,6 +470,11 @@ footer hr {
   text-align: center;
 }
 
+.music .row {
+  margin-bottom: 4em;
+
+}
+
 .music img {
   width: 60%;
   max-width: 250px;
@@ -479,6 +485,7 @@ footer hr {
 
 .music h1 {
   color: #e4382c;
+  margin-top: 0em;
 }
 
 .music h2 {
