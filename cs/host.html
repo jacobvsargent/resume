@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Common Sense - Host</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.png" type="image/x-icon">
+  <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="host">
+  <div class="container">
+    <header>
+      <a href="https://jacobsargent.com/cs/cs.html">
+        <h1>Common Sense</h1>
+      </a>
+    </header>
+    
+    <div id="setup-screen">
+      <div id="game-settings">
+        <div class="setting-group">
+          <label for="rounds-slider">Total Rounds:</label>
+          <div class="slider-container">
+            <input type="range" id="rounds-slider" min="0" max="5" value="2" class="slider">
+            <span id="rounds-value" class="slider-value">5</span>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label for="difficulty-slider">Difficulty:</label>
+          <div class="slider-container">
+            <input type="range" id="difficulty-slider" min="0" max="2" value="1" class="slider">
+            <span id="difficulty-value" class="slider-value">Medium</span>
+          </div>
+        </div>
+      </div>
+      <button id="create-game" class="btn-primary">Create New Game</button>
+      <div id="room-display" class="hidden">
+        <h3>Room Code: <span id="room-code" class="highlight"></span></h3>
+        <p>Players: <span id="player-count">0</span></p>
+        <div id="player-list"></div>
+        <div id="game-info">
+          <p>Rounds: <span id="display-rounds" class="highlight"></span></p>
+          <p>Difficulty: <span id="display-difficulty" class="highlight"></span></p>
+        </div>
+        <button id="start-game" class="btn-primary disabled" disabled>Start Game</button>
+      </div>
+    </div>
+
+    <div id="game-screen" class="hidden">
+      <div class="game-info-bubble">
+        <div class="round-info">
+          Round <span id="current-round-number">1</span> of <span id="total-rounds-display">5</span>
+        </div>
+      </div>
+      <div id="question-display">
+        <h2 id="current-question" class="question-text"></h2>
+      </div>
+      <div id="waiting-players">
+        <h3>Waiting for players to answer...</h3>
+        <ul id="player-status"></ul>
+      </div>
+      <div id="results-display" class="hidden">
+        <h2 id="result-header"></h2>
+        <div id="leaderboard"></div>
+        <div id="next-round-status" class="hidden">
+          <h3>Waiting for <span id="players-not-ready">0</span> players to continue...</h3>
+          <ul id="player-ready-status"></ul>
+        </div>
+      </div>
+      <div id="game-end" class="hidden">
+        <div class="game-info-bubble">
+          <h1 class="game-over-title">Final Standings</h1>
+        </div>
+        <div id="final-leaderboard"></div>
+        <button id="new-game" class="btn-primary">Start New Game</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="common-sense-data.js"></script>
+  <script src="host.js"></script>
+</body>
+</html>
