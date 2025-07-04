@@ -505,7 +505,7 @@ function showGameEnd() {
     questionDisplay.classList.add('hidden');
     questionDisplay.style.display = 'none'; // Double-enforce hiding
   }
-  
+
   // Also hide the current question element specifically
   if (currentQuestionElement) {
     currentQuestionElement.style.display = 'none';
@@ -552,6 +552,7 @@ function showGameEnd() {
   const questionDisplayBackup = document.querySelector('.question-display');
   if (questionDisplayBackup) {
     questionDisplayBackup.classList.add('hidden');
+    questionDisplayBackup.style.display = 'none'; // Double-enforce hiding
   }
 
   // Create a new game
