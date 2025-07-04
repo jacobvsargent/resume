@@ -387,6 +387,7 @@ function showResults() {
     consensusStatus: consensusStatus,
     totalPointsEarned: totalPointsEarned,
     maxPossiblePoints: maxPossiblePoints
+    updatedAt: Date.now()  // <-- force Firebase to treat it as new
   });
 
   console.log('✅ Host detected that roundResult has been written!', currentRoundNumber);
