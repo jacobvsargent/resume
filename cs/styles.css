@@ -535,3 +535,9 @@ h3 {
   font-size: 1.5em;
   font-weight: bold;
 }
+
+.difficulty-explainer {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #666;
+}

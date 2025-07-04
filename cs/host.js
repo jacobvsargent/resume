@@ -33,6 +33,7 @@ const roundsSlider = document.getElementById('rounds-slider');
 const roundsValue = document.getElementById('rounds-value');
 const difficultySlider = document.getElementById('difficulty-slider');
 const difficultyValue = document.getElementById('difficulty-value');
+const difficultyExplainer = document.getElementById('difficulty-explainer');
 const displayRounds = document.getElementById('display-rounds');
 const displayDifficulty = document.getElementById('display-difficulty');
 const currentRoundNumberElement = document.getElementById('current-round-number');
@@ -57,6 +58,20 @@ difficultySlider.addEventListener('input', function() {
   const value = difficultyOptions[parseInt(this.value)];
   difficultyValue.textContent = value;
   difficulty = value;
+
+  // Update difficulty explainer
+  switch (value) {
+    case 'Easy':
+      difficultyExplainer.textContent = 'Easy - Up to 1 sense at a time. Either "MOST" or "LEAST" questions.';
+      break;
+    case 'Medium':
+      difficultyExplainer.textContent = 'Medium - Up to 2 senses at a time. Either "MOST" or "LEAST" questions.';
+      break;
+    case 'Hard':
+      difficultyExplainer.textContent = 'Hard - Up to 3 senses at a time. "MOST", "LEAST", or "SECOND MOST" questions.';
+      break;
+  }
+  
 });
 
 // Initialize slider values

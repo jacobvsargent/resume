@@ -1,10 +1,8 @@
-5.30 goals
--fix final leaderboard situation
--implement difficulty mechanic
 
 
-> instructions on index.html
-> copyright yadda yadda
-> describe mode
-> timer
-> players can show up as objects
+
+
+
+possible future mechanics
+-timer
+-tiebreaker
