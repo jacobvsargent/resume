@@ -244,6 +244,13 @@
             opacity: 0.7;
         }
 
+        .battle-result-buttons {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
         @media (max-width: 768px) {
             .battlefield {
                 grid-template-columns: 1fr;
@@ -304,6 +311,10 @@
             <h3>Battle Results</h3>
             <div class="result-grid" id="result-grid"></div>
             <div id="overall-result"></div>
+            <div class="battle-result-buttons">
+                <button class="button" id="next-round-btn" onclick="nextRound()" style="display: none;">Next Round</button>
+                <button class="button" id="new-game-btn" onclick="restartGame()" style="display: none;">New Game</button>
+            </div>
         </div>
 
         <div class="player-hand" id="player-hand">
@@ -312,8 +323,6 @@
 
         <div style="margin-top: 2rem; padding-bottom: 2rem;">
             <button class="button" id="battle-btn" onclick="startBattle()" disabled>Battle!</button>
-            <button class="button" id="next-round-btn" onclick="nextRound()" style="display: none;">Next Round</button>
-            <button class="button" id="new-game-btn" onclick="restartGame()" style="display: none;">New Game</button>
         </div>
     </div>
 
@@ -338,6 +347,12 @@
                     views: false,
                     links: false
                 };
+            }
+
+            clone() {
+                const cloned = new WikipediaArticle(this.title, this.words, this.views, this.links);
+                cloned.revealed = { ...this.revealed };
+                return cloned;
             }
         }
 
@@ -383,16 +398,7 @@
 
         function getRandomArticles(count) {
             const shuffled = [...articlePool].sort(() => 0.5 - Math.random());
-            return shuffled.slice(0, count).map(article => {
-                const newArticle = new WikipediaArticle(article.title, article.words, article.views, article.links);
-                // All articles start with no revealed attributes
-                newArticle.revealed = {
-                    words: false,
-                    views: false,
-                    links: false
-                };
-                return newArticle;
-            });
+            return shuffled.slice(0, count).map(article => article.clone());
         }
 
         function createCardElement(article, isPlayer = true) {
@@ -461,13 +467,12 @@
                 const slotElement = document.getElementById(`opp-${slot}`);
                 slotElement.innerHTML = '';
                 const opponentCard = createCardElement(article, false);
-                opponentCard.draggable = false; // Explicitly ensure opponent cards aren't draggable
                 slotElement.appendChild(opponentCard);
             });
         }
 
         function dragStart(event, article) {
-            event.dataTransfer.setData('text/plain', JSON.stringify(article));
+            event.dataTransfer.setData('text/plain', article.title);
             event.target.classList.add('dragging');
         }
 
@@ -480,71 +485,105 @@
             event.preventDefault();
             event.target.classList.remove('drag-over');
             
-            const articleData = event.dataTransfer.getData('text/plain');
-            const article = JSON.parse(articleData);
+            const articleTitle = event.dataTransfer.getData('text/plain');
             
-            // Find the actual article object from playerCards to maintain revealed state
-            const actualArticle = gameState.playerCards.find(card => card.title === article.title);
-            if (!actualArticle) return;
+            // Find the actual article object
+            let actualArticle = null;
+            let sourceLocation = null;
             
-            // Find which slot the dragged card came from (if any)
-            let sourceSlot = null;
+            // Check if it's from player slots
             for (const [slot, card] of Object.entries(gameState.playerSlots)) {
-                if (card && card.title === actualArticle.title) {
-                    sourceSlot = slot;
+                if (card && card.title === articleTitle) {
+                    actualArticle = card;
+                    sourceLocation = { type: 'slot', slot: slot };
                     break;
                 }
             }
-
-            // Check if there's already a card in the target slot
+            
+            // Check if it's from player hand
+            if (!actualArticle) {
+                actualArticle = gameState.playerCards.find(card => card.title === articleTitle);
+                if (actualArticle) {
+                    sourceLocation = { type: 'hand' };
+                }
+            }
+            
+            if (!actualArticle) return;
+            
+            // Check if target slot has a card
             const existingCard = gameState.playerSlots[slotType];
-
-            if (sourceSlot) {
-                // Card is moving from one slot to another
-                if (existingCard !== null) {
-                    // Swap the cards
-                    gameState.playerSlots[sourceSlot] = existingCard;
-                    gameState.playerSlots[slotType] = actualArticle;
-                    
-                    // Update both slot visuals
-                    const sourceSlotElement = document.getElementById(`player-${sourceSlot}`);
-                    const targetSlotElement = document.getElementById(`player-${slotType}`);
-                    
-                    sourceSlotElement.innerHTML = '';
-                    sourceSlotElement.appendChild(createCardElement(existingCard, false));
-                    
-                    targetSlotElement.innerHTML = '';
-                    targetSlotElement.appendChild(createCardElement(actualArticle, false));
-                } else {
-                    // Moving to empty slot - clear source slot
-                    gameState.playerSlots[sourceSlot] = null;
+            
+            if (sourceLocation.type === 'slot') {
+                // Moving from slot to slot
+                if (existingCard) {
+                    // Swap cards
+                    gameState.playerSlots[sourceLocation.slot] = existingCard;
                     gameState.playerSlots[slotType] = actualArticle;
                     
                     // Update visuals
-                    const sourceSlotElement = document.getElementById(`player-${sourceSlot}`);
+                    const sourceSlotElement = document.getElementById(`player-${sourceLocation.slot}`);
+                    const targetSlotElement = document.getElementById(`player-${slotType}`);
+                    
+                    sourceSlotElement.innerHTML = '';
+                    sourceSlotElement.appendChild(createCardElement(existingCard, true));
+                    
+                    targetSlotElement.innerHTML = '';
+                    targetSlotElement.appendChild(createCardElement(actualArticle, true));
+                } else {
+                    // Moving to empty slot
+                    gameState.playerSlots[sourceLocation.slot] = null;
+                    gameState.playerSlots[slotType] = actualArticle;
+                    
+                    // Update visuals
+                    const sourceSlotElement = document.getElementById(`player-${sourceLocation.slot}`);
                     const targetSlotElement = document.getElementById(`player-${slotType}`);
                     
                     sourceSlotElement.innerHTML = '';
                     targetSlotElement.innerHTML = '';
-                    targetSlotElement.appendChild(createCardElement(actualArticle, false));
+                    targetSlotElement.appendChild(createCardElement(actualArticle, true));
                 }
-                return;
+            } else {
+                // Moving from hand to slot
+                if (existingCard) {
+                    // Put existing card back to hand
+                    gameState.playerSlots[slotType] = actualArticle;
+                    
+                    // Update slot
+                    const targetSlotElement = document.getElementById(`player-${slotType}`);
+                    targetSlotElement.innerHTML = '';
+                    targetSlotElement.appendChild(createCardElement(actualArticle, true));
+                    
+                    // Remove from hand and add existing card to hand
+                    const playerHand = document.getElementById('player-hand');
+                    const cards = playerHand.querySelectorAll('.card');
+                    cards.forEach(card => {
+                        if (card.querySelector('.card-title').textContent === actualArticle.title) {
+                            card.remove();
+                        }
+                    });
+                    
+                    // Add existing card to hand
+                    const existingCardElement = createCardElement(existingCard, true);
+                    playerHand.appendChild(existingCardElement);
+                } else {
+                    // Simple placement
+                    gameState.playerSlots[slotType] = actualArticle;
+                    
+                    // Update slot
+                    const targetSlotElement = document.getElementById(`player-${slotType}`);
+                    targetSlotElement.innerHTML = '';
+                    targetSlotElement.appendChild(createCardElement(actualArticle, true));
+                    
+                    // Remove from hand
+                    const playerHand = document.getElementById('player-hand');
+                    const cards = playerHand.querySelectorAll('.card');
+                    cards.forEach(card => {
+                        if (card.querySelector('.card-title').textContent === actualArticle.title) {
+                            card.remove();
+                        }
+                    });
+                }
             }
-
-            // Place card in slot (from hand to slot)
-            gameState.playerSlots[slotType] = actualArticle;
-            const slotElement = document.getElementById(`player-${slotType}`);
-            slotElement.innerHTML = '';
-            slotElement.appendChild(createCardElement(actualArticle, false));
-            
-            // Remove card from hand if it came from hand
-            const playerHand = document.getElementById('player-hand');
-            const cards = playerHand.querySelectorAll('.card');
-            cards.forEach(card => {
-                if (card.querySelector('.card-title').textContent === actualArticle.title) {
-                    card.remove();
-                }
-            });
             
             // Check if all slots are filled
             const filledSlots = Object.values(gameState.playerSlots).filter(slot => slot !== null);
@@ -558,39 +597,6 @@
             
             gameState.battleInProgress = true;
             document.getElementById('battle-btn').style.display = 'none';
-            
-            // Reveal all stats for battle
-            Object.values(gameState.playerSlots).forEach(card => {
-                if (card) {
-                    card.revealed.words = true;
-                    card.revealed.views = true;
-                    card.revealed.links = true;
-                }
-            });
-            
-            Object.values(gameState.opponentSlots).forEach(card => {
-                if (card) {
-                    card.revealed.words = true;
-                    card.revealed.views = true;
-                    card.revealed.links = true;
-                }
-            });
-            
-            // Update card visuals to show revealed stats
-            ['words', 'views', 'links'].forEach(slot => {
-                const playerSlot = document.getElementById(`player-${slot}`);
-                const opponentSlot = document.getElementById(`opp-${slot}`);
-                
-                if (gameState.playerSlots[slot]) {
-                    playerSlot.innerHTML = '';
-                    playerSlot.appendChild(createCardElement(gameState.playerSlots[slot], false));
-                }
-                
-                if (gameState.opponentSlots[slot]) {
-                    opponentSlot.innerHTML = '';
-                    opponentSlot.appendChild(createCardElement(gameState.opponentSlots[slot], false));
-                }
-            });
             
             const results = [];
             const slots = ['words', 'views', 'links'];
@@ -633,10 +639,41 @@
                 gameState.wins++;
                 gameState.score += gameState.round * 100;
                 updateStats();
+                
+                // Reveal one attribute on one of the player's cards
+                revealRandomAttribute();
+                
                 document.getElementById('next-round-btn').style.display = 'inline-block';
             } else {
-                // Game over - show new game button
+                // Game over
                 document.getElementById('new-game-btn').style.display = 'inline-block';
+            }
+        }
+
+        function revealRandomAttribute() {
+            // Get all player cards (both in slots and hand)
+            const allPlayerCards = [...gameState.playerCards, ...Object.values(gameState.playerSlots).filter(card => card !== null)];
+            
+            // Find cards with unrevealed attributes
+            const cardsWithHiddenAttributes = allPlayerCards.filter(card => {
+                return !card.revealed.words || !card.revealed.views || !card.revealed.links;
+            });
+            
+            if (cardsWithHiddenAttributes.length > 0) {
+                // Pick a random card
+                const randomCard = cardsWithHiddenAttributes[Math.floor(Math.random() * cardsWithHiddenAttributes.length)];
+                
+                // Find hidden attributes
+                const hiddenAttributes = [];
+                if (!randomCard.revealed.words) hiddenAttributes.push('words');
+                if (!randomCard.revealed.views) hiddenAttributes.push('views');
+                if (!randomCard.revealed.links) hiddenAttributes.push('links');
+                
+                // Reveal a random attribute
+                if (hiddenAttributes.length > 0) {
+                    const randomAttribute = hiddenAttributes[Math.floor(Math.random() * hiddenAttributes.length)];
+                    randomCard.revealed[randomAttribute] = true;
+                }
             }
         }
 
@@ -712,12 +749,6 @@
             document.getElementById('round').textContent = gameState.round;
         }
 
-        function showGameOver() {
-            document.getElementById('final-rounds').textContent = gameState.round;
-            document.getElementById('final-score').textContent = gameState.round;
-            document.getElementById('game-over').style.display = 'flex';
-        }
-
         function restartGame() {
             gameState = {
                 round: 1,
@@ -755,7 +786,7 @@
         });
 
         document.addEventListener('dragleave', (e) => {
-            if (e.target.classList.contains('slot')) {
+            if (e.target.classList.contains('player-slot')) {
                 e.target.classList.remove('drag-over');
             }
         });
