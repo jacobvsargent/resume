@@ -85,8 +85,6 @@ function createGame() {
     currentRoundNumber: 1,
     playerReadyForNext: {},
     created: firebase.database.ServerValue.TIMESTAMP
-    console.error('HOST CREATED GAME AT:', created);
-
   }).then(() => {
     roomCodeElement.textContent = gameId;
     displayRounds.textContent = totalRounds;
@@ -94,6 +92,8 @@ function createGame() {
     roomDisplay.classList.remove('hidden');
     createGameBtn.classList.add('hidden');
     document.getElementById('game-settings').classList.add('hidden');
+    console.log('HOST CREATED GAME AT:', created);
+
     
     // Listen for player joins
     gameRef.child('players').on('value', (snapshot) => {
