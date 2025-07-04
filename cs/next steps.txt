@@ -3,12 +3,8 @@
 -implement difficulty mechanic
 
 
-
-
 > instructions on index.html
 > copyright yadda yadda
 > describe mode
-> point jacobsargent.com to new spot
-> url for game?
 > timer
 > players can show up as objects

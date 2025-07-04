@@ -85,6 +85,8 @@ function createGame() {
     currentRoundNumber: 1,
     playerReadyForNext: {},
     created: firebase.database.ServerValue.TIMESTAMP
+    console.error('HOST CREATED GAME AT:', created);
+
   }).then(() => {
     roomCodeElement.textContent = gameId;
     displayRounds.textContent = totalRounds;
