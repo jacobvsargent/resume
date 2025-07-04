@@ -444,20 +444,21 @@
             const articleData = event.dataTransfer.getData('text/plain');
             const article = JSON.parse(articleData);
             
-            // Check if there's already a card in this slot
-            const existingCard = gameState.playerSlots[slotType];
-            
-            if (existingCard !== null) {
-                // Find which slot the dragged card came from
-                let sourceSlot = null;
-                for (const [slot, card] of Object.entries(gameState.playerSlots)) {
-                    if (card && card.title === article.title) {
-                        sourceSlot = slot;
-                        break;
-                    }
+            // Find which slot the dragged card came from (if any)
+            let sourceSlot = null;
+            for (const [slot, card] of Object.entries(gameState.playerSlots)) {
+                if (card && card.title === article.title) {
+                    sourceSlot = slot;
+                    break;
                 }
-                
-                if (sourceSlot) {
+            }
+
+            // Check if there's already a card in the target slot
+            const existingCard = gameState.playerSlots[slotType];
+
+            if (sourceSlot) {
+                // Card is moving from one slot to another
+                if (existingCard !== null) {
                     // Swap the cards
                     gameState.playerSlots[sourceSlot] = existingCard;
                     gameState.playerSlots[slotType] = article;
@@ -471,12 +472,23 @@
                     
                     targetSlotElement.innerHTML = '';
                     targetSlotElement.appendChild(createCardElement(article, false));
+                } else {
+                    // Moving to empty slot - clear source slot
+                    gameState.playerSlots[sourceSlot] = null;
+                    gameState.playerSlots[slotType] = article;
                     
-                    return;
+                    // Update visuals
+                    const sourceSlotElement = document.getElementById(`player-${sourceSlot}`);
+                    const targetSlotElement = document.getElementById(`player-${slotType}`);
+                    
+                    sourceSlotElement.innerHTML = '';
+                    targetSlotElement.innerHTML = '';
+                    targetSlotElement.appendChild(createCardElement(article, false));
                 }
+                return;
             }
-            
-            // Place card in slot (original logic for empty slots or from hand)
+
+            // Place card in slot (from hand to slot)
             gameState.playerSlots[slotType] = article;
             const slotElement = document.getElementById(`player-${slotType}`);
             slotElement.innerHTML = '';
