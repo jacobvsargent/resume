@@ -384,12 +384,12 @@ function showResults() {
   
   // Save consensus status to Firebase for player screens
   db.ref(`games/${gameId}/roundResult`).set({
-    console.log('✅ Host detected that roundResult has been written!');
-
     consensusStatus: consensusStatus,
     totalPointsEarned: totalPointsEarned,
     maxPossiblePoints: maxPossiblePoints
   });
+
+  console.log('✅ Host detected that roundResult has been written!');
   
   // Update the integrated leaderboard with player responses
   updateIntegratedLeaderboard(roundPoints);
