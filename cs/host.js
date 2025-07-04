@@ -97,6 +97,22 @@ function createGame() {
     gameRef.child('players').on('value', (snapshot) => {
       players = snapshot.val() || {};
       updatePlayerList();
+
+      // Inject player names into commonSenseData.objects
+      if (commonSenseData && Array.isArray(commonSenseData.objects)) {
+        const playerNameObjects = Object.values(players).map(player => {
+          const name = (player.name || '').toUpperCase();
+          return [`${name}?`, "3 - Object", "5"];
+        });
+
+        // Avoid duplicates
+        commonSenseData.objects = [
+          ...commonSenseData.objects,
+          ...playerNameObjects.filter(obj =>
+            !commonSenseData.objects.some(existing => existing[0] === obj[0])
+          )
+        ];
+      }
     });
     
     // Listen for game status changes
@@ -172,27 +188,6 @@ function startGame() {
     alert('You need at least 2 players to start the game!');
     return;
   }
-
-  gameRef.child('players').on('value', (snapshot) => {
-  players = snapshot.val() || {};
-  updatePlayerList();
-
-  // Inject player names into commonSenseData.objects
-  if (commonSenseData && Array.isArray(commonSenseData.objects)) {
-    const playerNameObjects = Object.values(players).map(player => {
-      const name = (player.name || '').toUpperCase();
-      return [`${name}?`, "3 - Object", "5"];
-    });
-
-    // Avoid duplicates
-    commonSenseData.objects = [
-      ...commonSenseData.objects,
-      ...playerNameObjects.filter(obj =>
-        !commonSenseData.objects.some(existing => existing[0] === obj[0])
-      )
-    ];
-  }
-
 
   
   // Initialize scores for all players
