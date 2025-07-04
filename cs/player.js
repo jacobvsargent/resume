@@ -164,8 +164,6 @@ function setupGameListeners() {
   
   // Listen for round results
   db.ref(`games/${gameId}/roundResult`).on('value', (snapshot) => {
-    console.log('Host is calling showResults for round:', currentRoundNumber);
-
 
     const roundResult = snapshot.val();
     if (roundResult) {
