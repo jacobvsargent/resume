@@ -177,15 +177,6 @@
 
         .game-over {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
         }
 
         .game-over-content {
@@ -305,9 +296,10 @@
             <!-- Player cards will be inserted here -->
         </div>
 
-        <div style="margin-top: 2rem;">
+        <div style="margin-top: 2rem; padding-bottom: 2rem;">
             <button class="button" id="battle-btn" onclick="startBattle()" disabled>Battle!</button>
             <button class="button" id="next-round-btn" onclick="nextRound()" style="display: none;">Next Round</button>
+            <button class="button" id="new-game-btn" onclick="restartGame()" style="display: none;">New Game</button>
         </div>
     </div>
 
@@ -381,6 +373,10 @@
             if (isPlayer) {
                 card.draggable = true;
                 card.ondragstart = (e) => dragStart(e, article);
+            } else {
+                // Cards in slots should also be draggable
+                card.draggable = true;
+                card.ondragstart = (e) => dragStart(e, article);
             }
             
             card.innerHTML = `
@@ -448,18 +444,45 @@
             const articleData = event.dataTransfer.getData('text/plain');
             const article = JSON.parse(articleData);
             
-            // Check if slot is empty
-            if (gameState.playerSlots[slotType] !== null) {
-                return;
+            // Check if there's already a card in this slot
+            const existingCard = gameState.playerSlots[slotType];
+            
+            if (existingCard !== null) {
+                // Find which slot the dragged card came from
+                let sourceSlot = null;
+                for (const [slot, card] of Object.entries(gameState.playerSlots)) {
+                    if (card && card.title === article.title) {
+                        sourceSlot = slot;
+                        break;
+                    }
+                }
+                
+                if (sourceSlot) {
+                    // Swap the cards
+                    gameState.playerSlots[sourceSlot] = existingCard;
+                    gameState.playerSlots[slotType] = article;
+                    
+                    // Update both slot visuals
+                    const sourceSlotElement = document.getElementById(`player-${sourceSlot}`);
+                    const targetSlotElement = document.getElementById(`player-${slotType}`);
+                    
+                    sourceSlotElement.innerHTML = '';
+                    sourceSlotElement.appendChild(createCardElement(existingCard, false));
+                    
+                    targetSlotElement.innerHTML = '';
+                    targetSlotElement.appendChild(createCardElement(article, false));
+                    
+                    return;
+                }
             }
             
-            // Place card in slot
+            // Place card in slot (original logic for empty slots or from hand)
             gameState.playerSlots[slotType] = article;
             const slotElement = document.getElementById(`player-${slotType}`);
             slotElement.innerHTML = '';
             slotElement.appendChild(createCardElement(article, false));
             
-            // Remove card from hand
+            // Remove card from hand if it came from hand
             const playerHand = document.getElementById('player-hand');
             const cards = playerHand.querySelectorAll('.card');
             cards.forEach(card => {
@@ -524,8 +547,8 @@
                 updateStats();
                 document.getElementById('next-round-btn').style.display = 'inline-block';
             } else {
-                // Game over
-                showGameOver();
+                // Game over - show new game button
+                document.getElementById('new-game-btn').style.display = 'inline-block';
             }
         }
 
@@ -589,6 +612,7 @@
             // Hide results and buttons
             document.getElementById('battle-result').style.display = 'none';
             document.getElementById('next-round-btn').style.display = 'none';
+            document.getElementById('new-game-btn').style.display = 'none';
             document.getElementById('battle-btn').style.display = 'inline-block';
             document.getElementById('battle-btn').disabled = true;
             
@@ -621,6 +645,7 @@
             document.getElementById('game-over').style.display = 'none';
             document.getElementById('battle-result').style.display = 'none';
             document.getElementById('next-round-btn').style.display = 'none';
+            document.getElementById('new-game-btn').style.display = 'none';
             document.getElementById('battle-btn').style.display = 'inline-block';
             document.getElementById('battle-btn').disabled = true;
             
