@@ -164,6 +164,8 @@ function setupGameListeners() {
   
   // Listen for round results
   db.ref(`games/${gameId}/roundResult`).on('value', (snapshot) => {
+    console.log('✅ Player detected that roundResult has been written!');
+
 
     const roundResult = snapshot.val();
     if (roundResult) {

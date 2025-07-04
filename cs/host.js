@@ -389,7 +389,7 @@ function showResults() {
     maxPossiblePoints: maxPossiblePoints
   });
 
-  console.log('✅ Host detected that roundResult has been written!');
+  console.log('✅ Host detected that roundResult has been written!', currentRoundNumber);
   
   // Update the integrated leaderboard with player responses
   updateIntegratedLeaderboard(roundPoints);
