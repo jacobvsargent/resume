@@ -499,9 +499,11 @@ function showGameEnd() {
     roundCounter.classList.add('hidden');
   }
   
+  // Forcefully hide the question display block
   const questionDisplay = document.querySelector('.question-display');
   if (questionDisplay) {
     questionDisplay.classList.add('hidden');
+    questionDisplay.style.display = 'none'; // Double-enforce hiding
   }
   
   // Also hide the current question element specifically
