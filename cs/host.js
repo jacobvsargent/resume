@@ -203,6 +203,24 @@ function startGame() {
       // Set game status to active
       return db.ref(`games/${gameId}/status`).set('active');
     })
+
+    .then(() => {
+      playerScores = initialScores;
+
+      // DEBUG: Log all available objects before starting
+      if (commonSenseData && Array.isArray(commonSenseData.objects)) {
+        console.log("Available question objects before game start:");
+        commonSenseData.objects.forEach(obj => {
+          console.log(obj); // Each obj is like ["BANANA?", "3 - Object", "5"]
+        });
+      } else {
+        console.warn("commonSenseData.objects is not available or malformed");
+      }
+
+      // Set game status to active
+      return db.ref(`games/${gameId}/status`).set('active');
+    })
+    
     .then(() => startNewRound());
 }
 
@@ -567,14 +585,6 @@ function showGameEnd() {
   
   finalHTML += '</tbody></table>';
   finalLeaderboardElement.innerHTML = finalHTML;
-
-
-
-  const questionDisplayBackup = document.querySelector('.question-display');
-  if (questionDisplayBackup) {
-    questionDisplayBackup.classList.add('hidden');
-    questionDisplayBackup.style.display = 'none'; // Double-enforce hiding
-  }
 
   // Create a new game
   newGameBtn.addEventListener('click', createGame);
