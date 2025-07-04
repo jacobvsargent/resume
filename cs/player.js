@@ -178,22 +178,19 @@ function setupGameListeners() {
         playerResultHeader.className = "failure";
       }
       
-      // Check if we're currently on the answer submitted screen
-      if (!answerSubmitted.classList.contains('hidden')) {
-        // Results are ready and we're currently on the "answer submitted" screen
-        // Get the answers and players to show results
-        Promise.all([
-          db.ref(`games/${gameId}/playerAnswers`).once('value'),
-          db.ref(`games/${gameId}/players`).once('value')
-        ]).then(([answersSnapshot, playersSnapshot]) => {
-          const answers = answersSnapshot.val() || {};
-          const players = playersSnapshot.val() || {};
-          
-          if (answers[playerId]) {
-            showPlayerResults(answers, players);
-          }
-        });
-      }
+      
+      Promise.all([
+        db.ref(`games/${gameId}/playerAnswers`).once('value'),
+        db.ref(`games/${gameId}/players`).once('value')
+      ]).then(([answersSnapshot, playersSnapshot]) => {
+        const answers = answersSnapshot.val() || {};
+        const players = playersSnapshot.val() || {};
+        
+        if (answers[playerId]) {
+          showPlayerResults(answers, players);
+        }
+      });
+      
     }
   });
   
