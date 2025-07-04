@@ -36,6 +36,15 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
+        .title a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .title a:hover {
+            text-decoration: none;
+        }
+
         .stats {
             display: flex;
             justify-content: center;
@@ -68,8 +77,8 @@
         }
 
         .opponent-slot, .player-slot {
-            width: 120px;
-            height: 160px;
+            width: 160px;
+            height: 120px;
             border: 3px solid rgba(255,255,255,0.3);
             border-radius: 10px;
             display: flex;
@@ -93,8 +102,8 @@
         }
 
         .card {
-            width: 110px;
-            height: 150px;
+            width: 150px;
+            height: 110px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 8px;
             padding: 8px;
@@ -142,6 +151,11 @@
         .stat-value {
             font-weight: bold;
             color: #FFD700;
+        }
+
+        .stat-hidden {
+            font-weight: bold;
+            color: #888;
         }
 
         .player-hand {
@@ -248,21 +262,21 @@
             }
             
             .opponent-slot, .player-slot {
-                width: 100px;
-                height: 130px;
+                width: 130px;
+                height: 100px;
                 margin-bottom: 0;
             }
             
             .card {
-                width: 90px;
-                height: 120px;
+                width: 120px;
+                height: 90px;
             }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1 class="title">🌐 WikiRogue</h1>
+        <h1 class="title"><a href="https://jacobsargent.com/wiki/wikirogue.html">🌐 WikiRogue</a></h1>
         
         <div class="stats">
             <div>Round: <span id="round">1</span></div>
@@ -319,6 +333,11 @@
                 this.words = words;
                 this.views = views;
                 this.links = links;
+                this.revealed = {
+                    words: false,
+                    views: false,
+                    links: false
+                };
             }
         }
 
@@ -364,7 +383,16 @@
 
         function getRandomArticles(count) {
             const shuffled = [...articlePool].sort(() => 0.5 - Math.random());
-            return shuffled.slice(0, count);
+            return shuffled.slice(0, count).map(article => {
+                const newArticle = new WikipediaArticle(article.title, article.words, article.views, article.links);
+                // All articles start with no revealed attributes
+                newArticle.revealed = {
+                    words: false,
+                    views: false,
+                    links: false
+                };
+                return newArticle;
+            });
         }
 
         function createCardElement(article, isPlayer = true) {
@@ -375,20 +403,33 @@
                 card.ondragstart = (e) => dragStart(e, article);
             }
             
+            // Format values based on whether they're revealed
+            const wordsDisplay = article.revealed.words ? 
+                `<span class="stat-value">${article.words.toLocaleString()}</span>` : 
+                `<span class="stat-hidden">???</span>`;
+            
+            const viewsDisplay = article.revealed.views ? 
+                `<span class="stat-value">${article.views.toLocaleString()}</span>` : 
+                `<span class="stat-hidden">???</span>`;
+            
+            const linksDisplay = article.revealed.links ? 
+                `<span class="stat-value">${article.links}</span>` : 
+                `<span class="stat-hidden">???</span>`;
+            
             card.innerHTML = `
                 <div class="card-title">${article.title}</div>
                 <div class="card-stats">
                     <div class="stat-line">
                         <span>Words:</span>
-                        <span class="stat-value">${article.words.toLocaleString()}</span>
+                        ${wordsDisplay}
                     </div>
                     <div class="stat-line">
                         <span>Views:</span>
-                        <span class="stat-value">${article.views.toLocaleString()}</span>
+                        ${viewsDisplay}
                     </div>
                     <div class="stat-line">
                         <span>Links:</span>
-                        <span class="stat-value">${article.links}</span>
+                        ${linksDisplay}
                     </div>
                 </div>
             `;
@@ -442,10 +483,14 @@
             const articleData = event.dataTransfer.getData('text/plain');
             const article = JSON.parse(articleData);
             
+            // Find the actual article object from playerCards to maintain revealed state
+            const actualArticle = gameState.playerCards.find(card => card.title === article.title);
+            if (!actualArticle) return;
+            
             // Find which slot the dragged card came from (if any)
             let sourceSlot = null;
             for (const [slot, card] of Object.entries(gameState.playerSlots)) {
-                if (card && card.title === article.title) {
+                if (card && card.title === actualArticle.title) {
                     sourceSlot = slot;
                     break;
                 }
@@ -459,7 +504,7 @@
                 if (existingCard !== null) {
                     // Swap the cards
                     gameState.playerSlots[sourceSlot] = existingCard;
-                    gameState.playerSlots[slotType] = article;
+                    gameState.playerSlots[slotType] = actualArticle;
                     
                     // Update both slot visuals
                     const sourceSlotElement = document.getElementById(`player-${sourceSlot}`);
@@ -469,11 +514,11 @@
                     sourceSlotElement.appendChild(createCardElement(existingCard, false));
                     
                     targetSlotElement.innerHTML = '';
-                    targetSlotElement.appendChild(createCardElement(article, false));
+                    targetSlotElement.appendChild(createCardElement(actualArticle, false));
                 } else {
                     // Moving to empty slot - clear source slot
                     gameState.playerSlots[sourceSlot] = null;
-                    gameState.playerSlots[slotType] = article;
+                    gameState.playerSlots[slotType] = actualArticle;
                     
                     // Update visuals
                     const sourceSlotElement = document.getElementById(`player-${sourceSlot}`);
@@ -481,22 +526,22 @@
                     
                     sourceSlotElement.innerHTML = '';
                     targetSlotElement.innerHTML = '';
-                    targetSlotElement.appendChild(createCardElement(article, false));
+                    targetSlotElement.appendChild(createCardElement(actualArticle, false));
                 }
                 return;
             }
 
             // Place card in slot (from hand to slot)
-            gameState.playerSlots[slotType] = article;
+            gameState.playerSlots[slotType] = actualArticle;
             const slotElement = document.getElementById(`player-${slotType}`);
             slotElement.innerHTML = '';
-            slotElement.appendChild(createCardElement(article, false));
+            slotElement.appendChild(createCardElement(actualArticle, false));
             
             // Remove card from hand if it came from hand
             const playerHand = document.getElementById('player-hand');
             const cards = playerHand.querySelectorAll('.card');
             cards.forEach(card => {
-                if (card.querySelector('.card-title').textContent === article.title) {
+                if (card.querySelector('.card-title').textContent === actualArticle.title) {
                     card.remove();
                 }
             });
@@ -513,6 +558,39 @@
             
             gameState.battleInProgress = true;
             document.getElementById('battle-btn').style.display = 'none';
+            
+            // Reveal all stats for battle
+            Object.values(gameState.playerSlots).forEach(card => {
+                if (card) {
+                    card.revealed.words = true;
+                    card.revealed.views = true;
+                    card.revealed.links = true;
+                }
+            });
+            
+            Object.values(gameState.opponentSlots).forEach(card => {
+                if (card) {
+                    card.revealed.words = true;
+                    card.revealed.views = true;
+                    card.revealed.links = true;
+                }
+            });
+            
+            // Update card visuals to show revealed stats
+            ['words', 'views', 'links'].forEach(slot => {
+                const playerSlot = document.getElementById(`player-${slot}`);
+                const opponentSlot = document.getElementById(`opp-${slot}`);
+                
+                if (gameState.playerSlots[slot]) {
+                    playerSlot.innerHTML = '';
+                    playerSlot.appendChild(createCardElement(gameState.playerSlots[slot], false));
+                }
+                
+                if (gameState.opponentSlots[slot]) {
+                    opponentSlot.innerHTML = '';
+                    opponentSlot.appendChild(createCardElement(gameState.opponentSlots[slot], false));
+                }
+            });
             
             const results = [];
             const slots = ['words', 'views', 'links'];
