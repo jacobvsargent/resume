@@ -178,6 +178,8 @@ function createGame() {
     });
     
     totalRoundsDisplayElement.textContent = totalRounds;
+  }).catch(err => {
+  console.error('❌ Error creating game:', err);
   });
 }
 
