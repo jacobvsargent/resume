@@ -390,7 +390,7 @@ function showResults() {
   db.ref(`games/${gameId}/roundResult`).set({
     consensusStatus: consensusStatus,
     totalPointsEarned: totalPointsEarned,
-    maxPossiblePoints: maxPossiblePoints
+    maxPossiblePoints: maxPossiblePoints,
     updatedAt: Date.now()  // <-- force Firebase to treat it as new
   });
 
