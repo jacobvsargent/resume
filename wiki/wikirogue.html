@@ -373,10 +373,6 @@
             if (isPlayer) {
                 card.draggable = true;
                 card.ondragstart = (e) => dragStart(e, article);
-            } else {
-                // Cards in slots should also be draggable
-                card.draggable = true;
-                card.ondragstart = (e) => dragStart(e, article);
             }
             
             card.innerHTML = `
@@ -423,7 +419,9 @@
                 gameState.opponentSlots[slot] = article;
                 const slotElement = document.getElementById(`opp-${slot}`);
                 slotElement.innerHTML = '';
-                slotElement.appendChild(createCardElement(article, false));
+                const opponentCard = createCardElement(article, false);
+                opponentCard.draggable = false; // Explicitly ensure opponent cards aren't draggable
+                slotElement.appendChild(opponentCard);
             });
         }
 
