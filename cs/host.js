@@ -92,7 +92,7 @@ function createGame() {
     roomDisplay.classList.remove('hidden');
     createGameBtn.classList.add('hidden');
     document.getElementById('game-settings').classList.add('hidden');
-    console.log('HOST CREATED GAME AT:', created);
+    console.log('HOST CREATED GAME AT:', firebase.database.ServerValue.TIMESTAMP);
 
     
     // Listen for player joins
