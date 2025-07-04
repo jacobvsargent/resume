@@ -511,13 +511,15 @@ function showGameEnd() {
   gameEndElement.classList.remove('hidden');
   
   // Hide round counter and current question elements
-  const roundCounter = document.querySelector('.round-counter, #round-counter');
+  const roundCounter = document.querySelector('.game-info-bubble, #game-info-bubble');
+  console.log('roundCounter:', roundCounter);  // Is it null?
   if (roundCounter) {
     roundCounter.classList.add('hidden');
   }
   
   // Forcefully hide the question display block
   const questionDisplay = document.querySelector('.question-display, #question-display');
+  console.log('questionDisplay:', questionDisplay);  // Is it null?
   if (questionDisplay) {
     questionDisplay.classList.add('hidden');
     questionDisplay.style.display = 'none'; // Double-enforce hiding
