@@ -45,7 +45,7 @@
 
         .battlefield {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: auto repeat(3, 1fr);
             gap: 1rem;
             margin-bottom: 2rem;
             max-width: 800px;
@@ -53,18 +53,41 @@
             margin-right: auto;
         }
 
-        .battle-column {
+        .row-labels {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            justify-content: space-around;
+            padding: 1rem 0;
         }
 
-        .column-label {
+        .row-label {
             font-size: 1.2rem;
             font-weight: bold;
-            margin-bottom: 1rem;
             color: #FFD700;
             text-transform: uppercase;
+            writing-mode: vertical-lr;
+            text-orientation: mixed;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .column-headers {
+            display: contents;
+        }
+
+        .column-header {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #FFD700;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            grid-row: 1;
+        }
+
+        .battle-row {
+            display: contents;
         }
 
         .opponent-slot, .player-slot {
@@ -114,6 +137,15 @@
         .card.dragging {
             opacity: 0.5;
             transform: rotate(5deg);
+        }
+
+        .card.opponent-card {
+            cursor: default;
+        }
+
+        .card.opponent-card:hover {
+            transform: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .card-title {
@@ -232,30 +264,46 @@
 
         @media (max-width: 768px) {
             .battlefield {
-                grid-template-columns: 1fr;
+                grid-template-columns: auto 1fr;
+                gap: 1rem;
+            }
+            
+            .row-labels {
+                flex-direction: column;
                 gap: 2rem;
             }
             
-            .battle-column {
-                flex-direction: row;
-                justify-content: space-around;
+            .row-label {
+                writing-mode: horizontal-tb;
+                height: auto;
+                width: 80px;
             }
             
-            .column-label {
-                writing-mode: vertical-lr;
-                margin-bottom: 0;
-                margin-right: 1rem;
+            .column-headers {
+                display: flex;
+                justify-content: space-around;
+                margin-bottom: 1rem;
+            }
+            
+            .column-header {
+                grid-row: auto;
+            }
+            
+            .battle-row {
+                display: flex;
+                justify-content: space-around;
+                margin-bottom: 1rem;
             }
             
             .opponent-slot, .player-slot {
-                width: 100px;
-                height: 130px;
+                width: 90px;
+                height: 120px;
                 margin-bottom: 0;
             }
             
             .card {
-                width: 90px;
-                height: 120px;
+                width: 80px;
+                height: 110px;
             }
         }
     </style>
@@ -269,19 +317,26 @@
         </div>
 
         <div class="battlefield">
-            <div class="battle-column">
-                <div class="column-label">Words</div>
+            <div class="row-labels">
+                <div class="row-label">Opponent</div>
+                <div class="row-label">Player</div>
+            </div>
+            
+            <div class="column-headers">
+                <div class="column-header">Words</div>
+                <div class="column-header">Views</div>
+                <div class="column-header">Links</div>
+            </div>
+            
+            <div class="battle-row">
                 <div class="opponent-slot" id="opp-words"></div>
-                <div class="player-slot" id="player-words" ondrop="drop(event, 'words')" ondragover="allowDrop(event)"></div>
-            </div>
-            <div class="battle-column">
-                <div class="column-label">Views</div>
                 <div class="opponent-slot" id="opp-views"></div>
-                <div class="player-slot" id="player-views" ondrop="drop(event, 'views')" ondragover="allowDrop(event)"></div>
-            </div>
-            <div class="battle-column">
-                <div class="column-label">Links</div>
                 <div class="opponent-slot" id="opp-links"></div>
+            </div>
+            
+            <div class="battle-row">
+                <div class="player-slot" id="player-words" ondrop="drop(event, 'words')" ondragover="allowDrop(event)"></div>
+                <div class="player-slot" id="player-views" ondrop="drop(event, 'views')" ondragover="allowDrop(event)"></div>
                 <div class="player-slot" id="player-links" ondrop="drop(event, 'links')" ondragover="allowDrop(event)"></div>
             </div>
         </div>
@@ -367,14 +422,19 @@
             return shuffled.slice(0, count);
         }
 
-        function createCardElement(article, isPlayer = true) {
+        function createCardElement(article, isPlayer = true, isOpponent = false) {
             const card = document.createElement('div');
             card.className = 'card';
-            if (isPlayer) {
+            
+            // Only allow dragging for player cards (not opponent cards)
+            if (isPlayer && !isOpponent) {
                 card.draggable = true;
                 card.ondragstart = (e) => dragStart(e, article);
+            } else if (isOpponent) {
+                card.classList.add('opponent-card');
+                card.draggable = false;
             } else {
-                // Cards in slots should also be draggable
+                // Cards in player slots should be draggable
                 card.draggable = true;
                 card.ondragstart = (e) => dragStart(e, article);
             }
@@ -410,7 +470,7 @@
             
             // Deal player cards
             gameState.playerCards.forEach(article => {
-                const cardElement = createCardElement(article, true);
+                const cardElement = createCardElement(article, true, false);
                 playerHand.appendChild(cardElement);
             });
             
@@ -423,7 +483,7 @@
                 gameState.opponentSlots[slot] = article;
                 const slotElement = document.getElementById(`opp-${slot}`);
                 slotElement.innerHTML = '';
-                slotElement.appendChild(createCardElement(article, false));
+                slotElement.appendChild(createCardElement(article, false, true));
             });
         }
 
@@ -467,10 +527,10 @@
                     const targetSlotElement = document.getElementById(`player-${slotType}`);
                     
                     sourceSlotElement.innerHTML = '';
-                    sourceSlotElement.appendChild(createCardElement(existingCard, false));
+                    sourceSlotElement.appendChild(createCardElement(existingCard, false, false));
                     
                     targetSlotElement.innerHTML = '';
-                    targetSlotElement.appendChild(createCardElement(article, false));
+                    targetSlotElement.appendChild(createCardElement(article, false, false));
                     
                     return;
                 }
@@ -480,7 +540,7 @@
             gameState.playerSlots[slotType] = article;
             const slotElement = document.getElementById(`player-${slotType}`);
             slotElement.innerHTML = '';
-            slotElement.appendChild(createCardElement(article, false));
+            slotElement.appendChild(createCardElement(article, false, false));
             
             // Remove card from hand if it came from hand
             const playerHand = document.getElementById('player-hand');
