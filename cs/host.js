@@ -518,6 +518,8 @@ function showGameEnd() {
   
   // Forcefully hide the question display block
   const questionDisplay = document.querySelector('.question-display');
+  console.log('questionDisplay:', questionDisplay);  // Is it null?
+
   if (questionDisplay) {
     questionDisplay.classList.add('hidden');
     questionDisplay.style.display = 'none'; // Double-enforce hiding
@@ -565,6 +567,8 @@ function showGameEnd() {
   
   finalHTML += '</tbody></table>';
   finalLeaderboardElement.innerHTML = finalHTML;
+
+
 
   const questionDisplayBackup = document.querySelector('.question-display');
   if (questionDisplayBackup) {
