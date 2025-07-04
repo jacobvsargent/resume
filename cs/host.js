@@ -98,20 +98,21 @@ function createGame() {
       players = snapshot.val() || {};
       updatePlayerList();
 
-      // Inject player names into commonSenseData.objects
       if (commonSenseData && Array.isArray(commonSenseData.objects)) {
         const playerNameObjects = Object.values(players).map(player => {
           const name = (player.name || '').toUpperCase();
-          return [`${name}?`, "3 - Object", "5"];
+          return {
+            text: `${name}?`,
+            deck: "3 - Object",
+            count: 100
+          };
         });
 
         // Avoid duplicates
-        commonSenseData.objects = [
-          ...commonSenseData.objects,
-          ...playerNameObjects.filter(obj =>
-            !commonSenseData.objects.some(existing => existing[0] === obj[0])
-          )
-        ];
+        const existingTexts = new Set(commonSenseData.objects.map(obj => obj.text));
+        const newObjects = playerNameObjects.filter(obj => !existingTexts.has(obj.text));
+
+        commonSenseData.objects.push(...newObjects);
       }
     });
     
@@ -220,7 +221,7 @@ function startGame() {
       // Set game status to active
       return db.ref(`games/${gameId}/status`).set('active');
     })
-    
+
     .then(() => startNewRound());
 }
 
