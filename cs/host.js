@@ -106,7 +106,7 @@ function createGame() {
           return {
             text: `${name}?`,
             deck: "3 - Object",
-            count: 100
+            count: 20
           };
         });
 
@@ -334,12 +334,12 @@ function calculateRoundPoints() {
       answerMap[answer].push(playerId);
     });
     
-    // Award points to players who match at least one other player
+    // Award points based on number of players who gave the same answer
     Object.values(answerMap).forEach(playerIds => {
       if (playerIds.length > 1) {
-        // Multiple players gave this answer, award points to all
+        // Each player gets points equal to total number of matching players
         playerIds.forEach(playerId => {
-          pointsThisRound[playerId]++;
+          pointsThisRound[playerId] += playerIds.length;
         });
       }
     });
