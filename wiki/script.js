@@ -129,6 +129,28 @@ function generateGameMap() {
             }
         }
     }
+
+    // Logging
+    map.forEach((event, index) => {
+        let description = `${index + 1}: `;
+        switch (event.type) {
+            case EVENT_TYPES.BATTLE:
+                description += `battle (${event.difficulty.toLowerCase()})`;
+                break;
+            case EVENT_TYPES.BOSS:
+                description += `boss (${event.difficulty.toLowerCase()})`;
+                break;
+            case EVENT_TYPES.SPECIAL_EVENT:
+                description += `special event`;
+                break;
+            case EVENT_TYPES.SHOP:
+                description += `shop`;
+                break;
+            default:
+                description += `unknown`;
+        }
+        console.log(description + ';');
+    });
     
     return map;
 }
@@ -274,17 +296,30 @@ function createCardElement(article, isPlayer = true) {
 }
 
 function dealCards() {
-    gameState.playerCards = getRandomArticles(3);
+    // Only deal new player cards if they don't exist (first round or after game over)
+    if (gameState.playerCards.length === 0) {
+        gameState.playerCards = getRandomArticles(3);
+    }
+    
+    // Always deal new opponent cards
     gameState.opponentCards = getRandomArticles(3);
     
-    // Clear previous cards
+    // Clear previous cards from hand
     const playerHand = document.getElementById('player-hand');
     playerHand.innerHTML = '';
     
-    // Deal player cards
+    // Display player cards (add cards that aren't in slots back to hand)
     gameState.playerCards.forEach(article => {
-        const cardElement = createCardElement(article, true);
-        playerHand.appendChild(cardElement);
+        // Check if this card is currently in a slot
+        const inSlot = Object.values(gameState.playerSlots).some(slotCard => 
+            slotCard && slotCard.title === article.title
+        );
+        
+        // Only add to hand if not in a slot
+        if (!inSlot) {
+            const cardElement = createCardElement(article, true);
+            playerHand.appendChild(cardElement);
+        }
     });
     
     // Place opponent cards randomly
@@ -304,13 +339,6 @@ function dealCards() {
     gameState.battleInProgress = false;
     document.getElementById('battle-btn').disabled = true;
     document.getElementById('battle-btn').style.display = 'inline-block';
-    
-    // Clear slots
-    ['words', 'views', 'links'].forEach(slot => {
-        const playerSlot = document.getElementById(`player-${slot}`);
-        playerSlot.innerHTML = '';
-        gameState.playerSlots[slot] = null;
-    });
     
     // Hide results
     document.getElementById('battle-result').style.display = 'none';
@@ -582,15 +610,13 @@ function nextRound() {
         return;
     }
     
-    // Reset slots
-    gameState.playerSlots = { words: null, views: null, links: null };
+    // DON'T reset slots - keep player's cards in their positions
+    // Reset opponent slots only
     gameState.opponentSlots = { words: null, views: null, links: null };
     
-    // Clear slots
+    // Clear only opponent slots
     ['words', 'views', 'links'].forEach(slot => {
-        const playerSlot = document.getElementById(`player-${slot}`);
         const opponentSlot = document.getElementById(`opp-${slot}`);
-        playerSlot.innerHTML = '';
         opponentSlot.innerHTML = '';
     });
     
@@ -598,6 +624,11 @@ function nextRound() {
     document.getElementById('battle-result').style.display = 'none';
     document.getElementById('next-round-btn').style.display = 'none';
     document.getElementById('new-game-btn').style.display = 'none';
+    
+    // Remove winner/loser styling from previous round
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('winner', 'loser');
+    });
     
     updateStats();
     updateMapDisplay();
