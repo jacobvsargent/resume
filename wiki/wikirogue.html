@@ -10,44 +10,70 @@
     <div class="game-container">
         <h1 class="title"><a href="https://jacobsargent.com/wiki/wikirogue.html">🌐 WikiRogue</a></h1>
         
-        <div class="stats">
-            <div>Round: <span id="round">1</span></div>
-        </div>
-
-        <div class="battlefield">
-            <div class="battle-column">
-                <div class="column-label">Words</div>
-                <div class="opponent-slot" id="opp-words"></div>
-                <div class="player-slot" id="player-words" ondrop="drop(event, 'words')" ondragover="allowDrop(event)"></div>
+        <div class="stats-and-map">
+            <div class="stats">
+                <div>Round: <span id="round">1</span></div>
             </div>
-            <div class="battle-column">
-                <div class="column-label">Views</div>
-                <div class="opponent-slot" id="opp-views"></div>
-                <div class="player-slot" id="player-views" ondrop="drop(event, 'views')" ondragover="allowDrop(event)"></div>
-            </div>
-            <div class="battle-column">
-                <div class="column-label">Links</div>
-                <div class="opponent-slot" id="opp-links"></div>
-                <div class="player-slot" id="player-links" ondrop="drop(event, 'links')" ondragover="allowDrop(event)"></div>
+            <div class="map-container" id="map-container">
+                <!-- Map icons will be inserted here -->
             </div>
         </div>
 
-        <div class="battle-result" id="battle-result">
-            <h3>Battle Results</h3>
-            <div class="result-grid" id="result-grid"></div>
-            <div id="overall-result"></div>
-            <div class="battle-result-buttons">
-                <button class="button" id="next-round-btn" onclick="nextRound()" style="display: none;">Next Round</button>
-                <button class="button" id="new-game-btn" onclick="restartGame()" style="display: none;">New Game</button>
+        <!-- Battle Screen -->
+        <div class="battle-screen" id="battle-screen">
+            <div class="battle-difficulty" id="battle-difficulty">
+                <h3>Battle Difficulty: <span id="difficulty-level">Easy</span></h3>
+            </div>
+
+            <div class="battlefield">
+                <div class="battle-column">
+                    <div class="column-label">Words</div>
+                    <div class="opponent-slot" id="opp-words"></div>
+                    <div class="player-slot" id="player-words" ondrop="drop(event, 'words')" ondragover="allowDrop(event)"></div>
+                </div>
+                <div class="battle-column">
+                    <div class="column-label">Views</div>
+                    <div class="opponent-slot" id="opp-views"></div>
+                    <div class="player-slot" id="player-views" ondrop="drop(event, 'views')" ondragover="allowDrop(event)"></div>
+                </div>
+                <div class="battle-column">
+                    <div class="column-label">Links</div>
+                    <div class="opponent-slot" id="opp-links"></div>
+                    <div class="player-slot" id="player-links" ondrop="drop(event, 'links')" ondragover="allowDrop(event)"></div>
+                </div>
+            </div>
+
+            <div class="battle-result" id="battle-result">
+                <h3>Battle Results</h3>
+                <div class="result-grid" id="result-grid"></div>
+                <div id="overall-result"></div>
+                <div class="battle-result-buttons">
+                    <button class="button" id="next-round-btn" onclick="nextRound()" style="display: none;">Next Round</button>
+                    <button class="button" id="new-game-btn" onclick="restartGame()" style="display: none;">New Game</button>
+                </div>
+            </div>
+
+            <div class="player-hand" id="player-hand">
+                <!-- Player cards will be inserted here -->
+            </div>
+
+            <div style="margin-top: 2rem; padding-bottom: 2rem;">
+                <button class="button" id="battle-btn" onclick="startBattle()" disabled>Battle!</button>
             </div>
         </div>
 
-        <div class="player-hand" id="player-hand">
-            <!-- Player cards will be inserted here -->
+        <!-- Event Screen -->
+        <div class="event-screen" id="event-screen">
+            <h2 id="event-title">Special Event</h2>
+            <p id="event-description">This is a special event placeholder.</p>
+            <button class="button" id="event-continue-btn" onclick="nextRound()">Continue</button>
         </div>
 
-        <div style="margin-top: 2rem; padding-bottom: 2rem;">
-            <button class="button" id="battle-btn" onclick="startBattle()" disabled>Battle!</button>
+        <!-- Shop Screen -->
+        <div class="event-screen" id="shop-screen">
+            <h2 id="shop-title">🛒 Shop</h2>
+            <p id="shop-description">This is a shop placeholder.</p>
+            <button class="button" id="shop-continue-btn" onclick="nextRound()">Continue</button>
         </div>
     </div>
 
@@ -55,7 +81,6 @@
         <div class="game-over-content">
             <h2>🎯 Game Over!</h2>
             <p>You survived <span id="final-rounds">0</span> rounds!</p>
-            <p>Final Round: <span id="final-score">0</span></p>
             <button class="button" onclick="restartGame()">Play Again</button>
         </div>
     </div>

@@ -68,6 +68,21 @@ const articlePool = [
     new WikipediaArticle("Waffle House Index", 367, 1411, 10)
 ];
 
+// Event types
+const EVENT_TYPES = {
+    BATTLE: 'battle',
+    SPECIAL_EVENT: 'special_event',
+    SHOP: 'shop',
+    BOSS: 'boss'
+};
+
+// Difficulty levels
+const DIFFICULTY = {
+    EASY: 'easy',
+    MEDIUM: 'medium',
+    HARD: 'hard',
+    BOSS: 'boss'
+};
 
 let gameState = {
     round: 1,
@@ -77,8 +92,139 @@ let gameState = {
     opponentCards: [],
     playerSlots: { words: null, views: null, links: null },
     opponentSlots: { words: null, views: null, links: null },
-    battleInProgress: false
+    battleInProgress: false,
+    gameMap: [],
+    currentEventIndex: 0
 };
+
+function generateGameMap() {
+    const map = [];
+    
+    // Generate 100 events
+    for (let i = 0; i < 100; i++) {
+        if (i === 0) {
+            // First event is always an easy battle
+            map.push({ type: EVENT_TYPES.BATTLE, difficulty: DIFFICULTY.EASY });
+        } else if ((i + 1) % 10 === 0) {
+            // Every 10th event is a boss
+            map.push({ type: EVENT_TYPES.BOSS, difficulty: DIFFICULTY.BOSS });
+        } else {
+            // Random distribution for other events
+            const rand = Math.random();
+            if (rand < 0.6) {
+                // 60% battles with varying difficulty
+                const difficultyRand = Math.random();
+                let difficulty;
+                if (difficultyRand < 0.4) difficulty = DIFFICULTY.EASY;
+                else if (difficultyRand < 0.7) difficulty = DIFFICULTY.MEDIUM;
+                else difficulty = DIFFICULTY.HARD;
+                
+                map.push({ type: EVENT_TYPES.BATTLE, difficulty });
+            } else if (rand < 0.8) {
+                // 20% special events
+                map.push({ type: EVENT_TYPES.SPECIAL_EVENT });
+            } else {
+                // 20% shops
+                map.push({ type: EVENT_TYPES.SHOP });
+            }
+        }
+    }
+    
+    return map;
+}
+
+function updateMapDisplay() {
+    const mapContainer = document.getElementById('map-container');
+    mapContainer.innerHTML = '';
+    
+    // Show current position and next 3 events
+    const startIndex = gameState.currentEventIndex;
+    const endIndex = Math.min(startIndex + 4, gameState.gameMap.length);
+    
+    for (let i = startIndex; i < endIndex; i++) {
+        const event = gameState.gameMap[i];
+        const isFirst = i === startIndex;
+        
+        // Create map icon
+        const mapIcon = document.createElement('div');
+        mapIcon.className = `map-icon ${isFirst ? 'current' : 'upcoming'}`;
+        
+        // Set icon based on event type
+        let iconText = '';
+        switch (event.type) {
+            case EVENT_TYPES.BATTLE:
+                iconText = '⚔️';
+                break;
+            case EVENT_TYPES.BOSS:
+                iconText = '👑';
+                break;
+            case EVENT_TYPES.SPECIAL_EVENT:
+                iconText = '❓';
+                break;
+            case EVENT_TYPES.SHOP:
+                iconText = '🛒';
+                break;
+        }
+        
+        mapIcon.textContent = iconText;
+        mapContainer.appendChild(mapIcon);
+        
+        // Add connector if not the last icon
+        if (i < endIndex - 1) {
+            const connector = document.createElement('div');
+            connector.className = 'map-connector';
+            mapContainer.appendChild(connector);
+        }
+    }
+}
+
+function showCurrentEvent() {
+    const currentEvent = gameState.gameMap[gameState.currentEventIndex];
+    
+    // Hide all screens first
+    document.getElementById('battle-screen').style.display = 'none';
+    document.getElementById('event-screen').style.display = 'none';
+    document.getElementById('shop-screen').style.display = 'none';
+    
+    switch (currentEvent.type) {
+        case EVENT_TYPES.BATTLE:
+        case EVENT_TYPES.BOSS:
+            showBattleScreen(currentEvent);
+            break;
+        case EVENT_TYPES.SPECIAL_EVENT:
+            showEventScreen();
+            break;
+        case EVENT_TYPES.SHOP:
+            showShopScreen();
+            break;
+    }
+}
+
+function showBattleScreen(event) {
+    document.getElementById('battle-screen').style.display = 'block';
+    
+    // Update difficulty display
+    const difficultyElement = document.getElementById('difficulty-level');
+    const difficultyContainer = document.getElementById('battle-difficulty');
+    
+    difficultyElement.textContent = event.difficulty.charAt(0).toUpperCase() + event.difficulty.slice(1);
+    difficultyContainer.className = `battle-difficulty difficulty-${event.difficulty}`;
+    
+    // Deal cards for this battle
+    dealCards();
+}
+
+function showEventScreen() {
+    document.getElementById('event-screen').style.display = 'block';
+    document.getElementById('event-title').textContent = 'Special Event';
+    document.getElementById('event-description').textContent = 'This is a special event placeholder.';
+}
+
+function showShopScreen() {
+    document.getElementById('shop-screen').style.display = 'block';
+    document.getElementById('shop-title').textContent = '🛒 Shop';
+    document.getElementById('shop-description').textContent = 'This is a shop placeholder.';
+}
 
 function getRandomArticles(count) {
     const shuffled = [...articlePool].sort(() => 0.5 - Math.random());
@@ -153,6 +299,23 @@ function dealCards() {
         const opponentCard = createCardElement(article, false);
         slotElement.appendChild(opponentCard);
     });
+    
+    // Reset battle state
+    gameState.battleInProgress = false;
+    document.getElementById('battle-btn').disabled = true;
+    document.getElementById('battle-btn').style.display = 'inline-block';
+    
+    // Clear slots
+    ['words', 'views', 'links'].forEach(slot => {
+        const playerSlot = document.getElementById(`player-${slot}`);
+        playerSlot.innerHTML = '';
+        gameState.playerSlots[slot] = null;
+    });
+    
+    // Hide results
+    document.getElementById('battle-result').style.display = 'none';
+    document.getElementById('next-round-btn').style.display = 'none';
+    document.getElementById('new-game-btn').style.display = 'none';
 }
 
 function dragStart(event, article) {
@@ -322,7 +485,6 @@ function startBattle() {
     if (roundWon) {
         gameState.wins++;
         gameState.score += gameState.round * 100;
-        updateStats();
         
         // Reveal one attribute on one of the player's cards
         revealRandomAttribute();
@@ -331,6 +493,8 @@ function startBattle() {
     } else {
         // Game over
         document.getElementById('new-game-btn').style.display = 'inline-block';
+        document.getElementById('final-rounds').textContent = gameState.round;
+        document.getElementById('game-over').style.display = 'block';
     }
 }
 
@@ -357,6 +521,9 @@ function revealRandomAttribute() {
         if (hiddenAttributes.length > 0) {
             const randomAttribute = hiddenAttributes[Math.floor(Math.random() * hiddenAttributes.length)];
             randomCard.revealed[randomAttribute] = true;
+
+            // Update the visual representation immediately
+            updateCardVisuals(randomCard);
         }
     }
 }
@@ -404,7 +571,16 @@ function displayBattleResults(results) {
 
 function nextRound() {
     gameState.round++;
+    gameState.currentEventIndex++;
     gameState.battleInProgress = false;
+    
+    // Check if game is complete
+    if (gameState.currentEventIndex >= gameState.gameMap.length) {
+        // Player completed all events - victory!
+        document.getElementById('final-rounds').textContent = gameState.round - 1;
+        document.getElementById('game-over').style.display = 'block';
+        return;
+    }
     
     // Reset slots
     gameState.playerSlots = { words: null, views: null, links: null };
@@ -422,34 +598,10 @@ function nextRound() {
     document.getElementById('battle-result').style.display = 'none';
     document.getElementById('next-round-btn').style.display = 'none';
     document.getElementById('new-game-btn').style.display = 'none';
-    document.getElementById('battle-btn').style.display = 'inline-block';
-    document.getElementById('battle-btn').disabled = true;
     
     updateStats();
-    
-    // Only deal new opponent cards and redraw player hand (preserve player cards)
-    gameState.opponentCards = getRandomArticles(3);
-    
-    // Redraw player hand with existing cards
-    const playerHand = document.getElementById('player-hand');
-    playerHand.innerHTML = '';
-    gameState.playerCards.forEach(article => {
-        const cardElement = createCardElement(article, true);
-        playerHand.appendChild(cardElement);
-    });
-    
-    // Place new opponent cards randomly
-    const slots = ['words', 'views', 'links'];
-    const shuffledSlots = [...slots].sort(() => 0.5 - Math.random());
-    
-    gameState.opponentCards.forEach((article, index) => {
-        const slot = shuffledSlots[index];
-        gameState.opponentSlots[slot] = article;
-        const slotElement = document.getElementById(`opp-${slot}`);
-        slotElement.innerHTML = '';
-        const opponentCard = createCardElement(article, false);
-        slotElement.appendChild(opponentCard);
-    });
+    updateMapDisplay();
+    showCurrentEvent();
 }
 
 function updateStats() {
@@ -465,15 +617,15 @@ function restartGame() {
         opponentCards: [],
         playerSlots: { words: null, views: null, links: null },
         opponentSlots: { words: null, views: null, links: null },
-        battleInProgress: false
+        battleInProgress: false,
+        gameMap: generateGameMap(),
+        currentEventIndex: 0
     };
     
     document.getElementById('game-over').style.display = 'none';
     document.getElementById('battle-result').style.display = 'none';
     document.getElementById('next-round-btn').style.display = 'none';
     document.getElementById('new-game-btn').style.display = 'none';
-    document.getElementById('battle-btn').style.display = 'inline-block';
-    document.getElementById('battle-btn').disabled = true;
     
     // Clear slots
     ['words', 'views', 'links'].forEach(slot => {
@@ -484,7 +636,32 @@ function restartGame() {
     });
     
     updateStats();
-    dealCards();
+    updateMapDisplay();
+    showCurrentEvent();
+}
+
+function updateCardVisuals(updatedCard) {
+    // Update card in player hand
+    const playerHand = document.getElementById('player-hand');
+    const handCards = playerHand.querySelectorAll('.card');
+    handCards.forEach(cardElement => {
+        if (cardElement.querySelector('.card-title').textContent === updatedCard.title) {
+            // Replace the card element with updated version
+            const newCardElement = createCardElement(updatedCard, true);
+            cardElement.parentNode.replaceChild(newCardElement, cardElement);
+        }
+    });
+    
+    // Update card in player slots
+    ['words', 'views', 'links'].forEach(slot => {
+        const slotCard = gameState.playerSlots[slot];
+        if (slotCard && slotCard.title === updatedCard.title) {
+            const slotElement = document.getElementById(`player-${slot}`);
+            slotElement.innerHTML = '';
+            const newCardElement = createCardElement(updatedCard, true);
+            slotElement.appendChild(newCardElement);
+        }
+    });
 }
 
 // Handle drag events
@@ -500,5 +677,7 @@ document.addEventListener('dragleave', (e) => {
 
 // Initialize game
 document.addEventListener('DOMContentLoaded', () => {
-    dealCards();
+    gameState.gameMap = generateGameMap();
+    updateMapDisplay();
+    showCurrentEvent();
 });
