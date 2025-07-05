@@ -404,7 +404,30 @@ function nextRound() {
     document.getElementById('battle-btn').disabled = true;
     
     updateStats();
-    dealCards();
+    
+    // Only deal new opponent cards and redraw player hand (preserve player cards)
+    gameState.opponentCards = getRandomArticles(3);
+    
+    // Redraw player hand with existing cards
+    const playerHand = document.getElementById('player-hand');
+    playerHand.innerHTML = '';
+    gameState.playerCards.forEach(article => {
+        const cardElement = createCardElement(article, true);
+        playerHand.appendChild(cardElement);
+    });
+    
+    // Place new opponent cards randomly
+    const slots = ['words', 'views', 'links'];
+    const shuffledSlots = [...slots].sort(() => 0.5 - Math.random());
+    
+    gameState.opponentCards.forEach((article, index) => {
+        const slot = shuffledSlots[index];
+        gameState.opponentSlots[slot] = article;
+        const slotElement = document.getElementById(`opp-${slot}`);
+        slotElement.innerHTML = '';
+        const opponentCard = createCardElement(article, false);
+        slotElement.appendChild(opponentCard);
+    });
 }
 
 function updateStats() {
