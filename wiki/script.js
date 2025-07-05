@@ -1,0 +1,459 @@
+class WikipediaArticle {
+    constructor(title, words, views, links) {
+        this.title = title;
+        this.words = words;
+        this.views = views;
+        this.links = links;
+        this.revealed = {
+            words: false,
+            views: false,
+            links: false
+        };
+    }
+
+    clone() {
+        const cloned = new WikipediaArticle(this.title, this.words, this.views, this.links);
+        cloned.revealed = { ...this.revealed };
+        return cloned;
+    }
+}
+
+// Sample Wikipedia articles with realistic stats
+const articlePool = [
+    new WikipediaArticle("Albert Einstein", 15420, 2847291, 234),
+    new WikipediaArticle("The Beatles", 18950, 3241876, 312),
+    new WikipediaArticle("World War II", 28340, 4892013, 456),
+    new WikipediaArticle("Leonardo da Vinci", 12840, 2156789, 189),
+    new WikipediaArticle("Harry Potter", 9876, 1847293, 145),
+    new WikipediaArticle("JavaScript", 11234, 934567, 167),
+    new WikipediaArticle("Pizza", 6789, 1234567, 89),
+    new WikipediaArticle("Bitcoin", 8932, 2876543, 134),
+    new WikipediaArticle("Artificial Intelligence", 13456, 1987654, 203),
+    new WikipediaArticle("Solar System", 16789, 2345678, 298),
+    new WikipediaArticle("William Shakespeare", 19234, 2987654, 345),
+    new WikipediaArticle("Ancient Egypt", 21876, 3456789, 387),
+    new WikipediaArticle("Game of Thrones", 7654, 1876543, 112),
+    new WikipediaArticle("Mount Everest", 8765, 1543210, 98),
+    new WikipediaArticle("Minecraft", 5432, 2109876, 76),
+    new WikipediaArticle("Photography", 10987, 1654321, 156),
+    new WikipediaArticle("Ancient Rome", 17654, 2765432, 289),
+    new WikipediaArticle("Electric Car", 9876, 1432109, 143),
+    new WikipediaArticle("Quantum Physics", 14321, 1098765, 198),
+    new WikipediaArticle("Olympic Games", 12109, 2543210, 178),
+    new WikipediaArticle("Dinosaurs", 11876, 3210987, 167),
+    new WikipediaArticle("Internet", 13210, 4321098, 234),
+    new WikipediaArticle("Space Exploration", 15678, 1876543, 245),
+    new WikipediaArticle("Climate Change", 18765, 2987654, 289),
+    new WikipediaArticle("Human Brain", 16543, 2109876, 223)
+];
+
+let gameState = {
+    round: 1,
+    wins: 0,
+    score: 0,
+    playerCards: [],
+    opponentCards: [],
+    playerSlots: { words: null, views: null, links: null },
+    opponentSlots: { words: null, views: null, links: null },
+    battleInProgress: false
+};
+
+function getRandomArticles(count) {
+    const shuffled = [...articlePool].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count).map(article => article.clone());
+}
+
+function createCardElement(article, isPlayer = true) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (isPlayer) {
+        card.draggable = true;
+        card.ondragstart = (e) => dragStart(e, article);
+    }
+    
+    // Format values based on whether they're revealed
+    const wordsDisplay = article.revealed.words ? 
+        `<span class="stat-value">${article.words.toLocaleString()}</span>` : 
+        `<span class="stat-hidden">???</span>`;
+    
+    const viewsDisplay = article.revealed.views ? 
+        `<span class="stat-value">${article.views.toLocaleString()}</span>` : 
+        `<span class="stat-hidden">???</span>`;
+    
+    const linksDisplay = article.revealed.links ? 
+        `<span class="stat-value">${article.links}</span>` : 
+        `<span class="stat-hidden">???</span>`;
+    
+    card.innerHTML = `
+        <div class="card-title">${article.title}</div>
+        <div class="card-stats">
+            <div class="stat-line">
+                <span>Words:</span>
+                ${wordsDisplay}
+            </div>
+            <div class="stat-line">
+                <span>Views:</span>
+                ${viewsDisplay}
+            </div>
+            <div class="stat-line">
+                <span>Links:</span>
+                ${linksDisplay}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function dealCards() {
+    gameState.playerCards = getRandomArticles(3);
+    gameState.opponentCards = getRandomArticles(3);
+    
+    // Clear previous cards
+    const playerHand = document.getElementById('player-hand');
+    playerHand.innerHTML = '';
+    
+    // Deal player cards
+    gameState.playerCards.forEach(article => {
+        const cardElement = createCardElement(article, true);
+        playerHand.appendChild(cardElement);
+    });
+    
+    // Place opponent cards randomly
+    const slots = ['words', 'views', 'links'];
+    const shuffledSlots = [...slots].sort(() => 0.5 - Math.random());
+    
+    gameState.opponentCards.forEach((article, index) => {
+        const slot = shuffledSlots[index];
+        gameState.opponentSlots[slot] = article;
+        const slotElement = document.getElementById(`opp-${slot}`);
+        slotElement.innerHTML = '';
+        const opponentCard = createCardElement(article, false);
+        slotElement.appendChild(opponentCard);
+    });
+}
+
+function dragStart(event, article) {
+    event.dataTransfer.setData('text/plain', article.title);
+    event.target.classList.add('dragging');
+}
+
+function allowDrop(event) {
+    event.preventDefault();
+    event.target.classList.add('drag-over');
+}
+
+function drop(event, slotType) {
+    event.preventDefault();
+    event.target.classList.remove('drag-over');
+    
+    const articleTitle = event.dataTransfer.getData('text/plain');
+    
+    // Find the actual article object
+    let actualArticle = null;
+    let sourceLocation = null;
+    
+    // Check if it's from player slots
+    for (const [slot, card] of Object.entries(gameState.playerSlots)) {
+        if (card && card.title === articleTitle) {
+            actualArticle = card;
+            sourceLocation = { type: 'slot', slot: slot };
+            break;
+        }
+    }
+    
+    // Check if it's from player hand
+    if (!actualArticle) {
+        actualArticle = gameState.playerCards.find(card => card.title === articleTitle);
+        if (actualArticle) {
+            sourceLocation = { type: 'hand' };
+        }
+    }
+    
+    if (!actualArticle) return;
+    
+    // Check if target slot has a card
+    const existingCard = gameState.playerSlots[slotType];
+    
+    if (sourceLocation.type === 'slot') {
+        // Moving from slot to slot
+        if (existingCard) {
+            // Swap cards
+            gameState.playerSlots[sourceLocation.slot] = existingCard;
+            gameState.playerSlots[slotType] = actualArticle;
+            
+            // Update visuals
+            const sourceSlotElement = document.getElementById(`player-${sourceLocation.slot}`);
+            const targetSlotElement = document.getElementById(`player-${slotType}`);
+            
+            sourceSlotElement.innerHTML = '';
+            sourceSlotElement.appendChild(createCardElement(existingCard, true));
+            
+            targetSlotElement.innerHTML = '';
+            targetSlotElement.appendChild(createCardElement(actualArticle, true));
+        } else {
+            // Moving to empty slot
+            gameState.playerSlots[sourceLocation.slot] = null;
+            gameState.playerSlots[slotType] = actualArticle;
+            
+            // Update visuals
+            const sourceSlotElement = document.getElementById(`player-${sourceLocation.slot}`);
+            const targetSlotElement = document.getElementById(`player-${slotType}`);
+            
+            sourceSlotElement.innerHTML = '';
+            targetSlotElement.innerHTML = '';
+            targetSlotElement.appendChild(createCardElement(actualArticle, true));
+        }
+    } else {
+        // Moving from hand to slot
+        if (existingCard) {
+            // Put existing card back to hand
+            gameState.playerSlots[slotType] = actualArticle;
+            
+            // Update slot
+            const targetSlotElement = document.getElementById(`player-${slotType}`);
+            targetSlotElement.innerHTML = '';
+            targetSlotElement.appendChild(createCardElement(actualArticle, true));
+            
+            // Remove from hand and add existing card to hand
+            const playerHand = document.getElementById('player-hand');
+            const cards = playerHand.querySelectorAll('.card');
+            cards.forEach(card => {
+                if (card.querySelector('.card-title').textContent === actualArticle.title) {
+                    card.remove();
+                }
+            });
+            
+            // Add existing card to hand
+            const existingCardElement = createCardElement(existingCard, true);
+            playerHand.appendChild(existingCardElement);
+        } else {
+            // Simple placement
+            gameState.playerSlots[slotType] = actualArticle;
+            
+            // Update slot
+            const targetSlotElement = document.getElementById(`player-${slotType}`);
+            targetSlotElement.innerHTML = '';
+            targetSlotElement.appendChild(createCardElement(actualArticle, true));
+            
+            // Remove from hand
+            const playerHand = document.getElementById('player-hand');
+            const cards = playerHand.querySelectorAll('.card');
+            cards.forEach(card => {
+                if (card.querySelector('.card-title').textContent === actualArticle.title) {
+                    card.remove();
+                }
+            });
+        }
+    }
+    
+    // Check if all slots are filled
+    const filledSlots = Object.values(gameState.playerSlots).filter(slot => slot !== null);
+    if (filledSlots.length === 3) {
+        document.getElementById('battle-btn').disabled = false;
+    }
+}
+
+function startBattle() {
+    if (gameState.battleInProgress) return;
+    
+    gameState.battleInProgress = true;
+    document.getElementById('battle-btn').style.display = 'none';
+    
+    const results = [];
+    const slots = ['words', 'views', 'links'];
+    
+    slots.forEach(slot => {
+        const playerCard = gameState.playerSlots[slot];
+        const opponentCard = gameState.opponentSlots[slot];
+        
+        let playerWins = false;
+        let comparison = '';
+        
+        if (slot === 'words') {
+            playerWins = playerCard.words > opponentCard.words;
+            comparison = `${playerCard.words.toLocaleString()} vs ${opponentCard.words.toLocaleString()}`;
+        } else if (slot === 'views') {
+            playerWins = playerCard.views > opponentCard.views;
+            comparison = `${playerCard.views.toLocaleString()} vs ${opponentCard.views.toLocaleString()}`;
+        } else if (slot === 'links') {
+            playerWins = playerCard.links > opponentCard.links;
+            comparison = `${playerCard.links} vs ${opponentCard.links}`;
+        }
+        
+        results.push({
+            slot,
+            playerWins,
+            comparison,
+            playerCard: playerCard.title,
+            opponentCard: opponentCard.title
+        });
+    });
+    
+    // Display results
+    displayBattleResults(results);
+    
+    // Calculate winner
+    const playerWins = results.filter(r => r.playerWins).length;
+    const roundWon = playerWins >= 2;
+    
+    if (roundWon) {
+        gameState.wins++;
+        gameState.score += gameState.round * 100;
+        updateStats();
+        
+        // Reveal one attribute on one of the player's cards
+        revealRandomAttribute();
+        
+        document.getElementById('next-round-btn').style.display = 'inline-block';
+    } else {
+        // Game over
+        document.getElementById('new-game-btn').style.display = 'inline-block';
+    }
+}
+
+function revealRandomAttribute() {
+    // Get all player cards (both in slots and hand)
+    const allPlayerCards = [...gameState.playerCards, ...Object.values(gameState.playerSlots).filter(card => card !== null)];
+    
+    // Find cards with unrevealed attributes
+    const cardsWithHiddenAttributes = allPlayerCards.filter(card => {
+        return !card.revealed.words || !card.revealed.views || !card.revealed.links;
+    });
+    
+    if (cardsWithHiddenAttributes.length > 0) {
+        // Pick a random card
+        const randomCard = cardsWithHiddenAttributes[Math.floor(Math.random() * cardsWithHiddenAttributes.length)];
+        
+        // Find hidden attributes
+        const hiddenAttributes = [];
+        if (!randomCard.revealed.words) hiddenAttributes.push('words');
+        if (!randomCard.revealed.views) hiddenAttributes.push('views');
+        if (!randomCard.revealed.links) hiddenAttributes.push('links');
+        
+        // Reveal a random attribute
+        if (hiddenAttributes.length > 0) {
+            const randomAttribute = hiddenAttributes[Math.floor(Math.random() * hiddenAttributes.length)];
+            randomCard.revealed[randomAttribute] = true;
+        }
+    }
+}
+
+function displayBattleResults(results) {
+    const battleResult = document.getElementById('battle-result');
+    const resultGrid = document.getElementById('result-grid');
+    const overallResult = document.getElementById('overall-result');
+    
+    resultGrid.innerHTML = '';
+    
+    results.forEach(result => {
+        const resultItem = document.createElement('div');
+        resultItem.className = `result-item ${result.playerWins ? 'result-win' : 'result-lose'}`;
+        resultItem.innerHTML = `
+            <strong>${result.slot.toUpperCase()}</strong><br>
+            ${result.playerWins ? '✅ WIN' : '❌ LOSE'}<br>
+            <small>${result.comparison}</small>
+        `;
+        resultGrid.appendChild(resultItem);
+        
+        // Highlight winning/losing cards
+        const playerSlot = document.getElementById(`player-${result.slot}`);
+        const opponentSlot = document.getElementById(`opp-${result.slot}`);
+        
+        if (result.playerWins) {
+            playerSlot.querySelector('.card').classList.add('winner');
+            opponentSlot.querySelector('.card').classList.add('loser');
+        } else {
+            playerSlot.querySelector('.card').classList.add('loser');
+            opponentSlot.querySelector('.card').classList.add('winner');
+        }
+    });
+    
+    const playerWins = results.filter(r => r.playerWins).length;
+    const roundWon = playerWins >= 2;
+    
+    overallResult.innerHTML = `
+        <h4>${roundWon ? '🎉 Victory!' : '💀 Defeat!'}</h4>
+        <p>You won ${playerWins}/3 battles</p>
+    `;
+    
+    battleResult.style.display = 'block';
+}
+
+function nextRound() {
+    gameState.round++;
+    gameState.battleInProgress = false;
+    
+    // Reset slots
+    gameState.playerSlots = { words: null, views: null, links: null };
+    gameState.opponentSlots = { words: null, views: null, links: null };
+    
+    // Clear slots
+    ['words', 'views', 'links'].forEach(slot => {
+        const playerSlot = document.getElementById(`player-${slot}`);
+        const opponentSlot = document.getElementById(`opp-${slot}`);
+        playerSlot.innerHTML = '';
+        opponentSlot.innerHTML = '';
+    });
+    
+    // Hide results and buttons
+    document.getElementById('battle-result').style.display = 'none';
+    document.getElementById('next-round-btn').style.display = 'none';
+    document.getElementById('new-game-btn').style.display = 'none';
+    document.getElementById('battle-btn').style.display = 'inline-block';
+    document.getElementById('battle-btn').disabled = true;
+    
+    updateStats();
+    dealCards();
+}
+
+function updateStats() {
+    document.getElementById('round').textContent = gameState.round;
+}
+
+function restartGame() {
+    gameState = {
+        round: 1,
+        wins: 0,
+        score: 0,
+        playerCards: [],
+        opponentCards: [],
+        playerSlots: { words: null, views: null, links: null },
+        opponentSlots: { words: null, views: null, links: null },
+        battleInProgress: false
+    };
+    
+    document.getElementById('game-over').style.display = 'none';
+    document.getElementById('battle-result').style.display = 'none';
+    document.getElementById('next-round-btn').style.display = 'none';
+    document.getElementById('new-game-btn').style.display = 'none';
+    document.getElementById('battle-btn').style.display = 'inline-block';
+    document.getElementById('battle-btn').disabled = true;
+    
+    // Clear slots
+    ['words', 'views', 'links'].forEach(slot => {
+        const playerSlot = document.getElementById(`player-${slot}`);
+        const opponentSlot = document.getElementById(`opp-${slot}`);
+        playerSlot.innerHTML = '';
+        opponentSlot.innerHTML = '';
+    });
+    
+    updateStats();
+    dealCards();
+}
+
+// Handle drag events
+document.addEventListener('dragend', (e) => {
+    e.target.classList.remove('dragging');
+});
+
+document.addEventListener('dragleave', (e) => {
+    if (e.target.classList.contains('player-slot')) {
+        e.target.classList.remove('drag-over');
+    }
+});
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', () => {
+    dealCards();
+});
