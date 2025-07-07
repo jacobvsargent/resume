@@ -633,15 +633,33 @@ function nextRound() {
         return;
     }
     
-    // DON'T reset slots - keep player's cards in their positions
-    // Reset opponent slots only
+    // Reset opponent slots
     gameState.opponentSlots = { words: null, views: null, links: null };
-    
-    // Clear only opponent slots
-    ['words', 'views', 'links'].forEach(slot => {
+
+    // Move player's slotted cards back to hand and clear player slots
+    for (const slot of ['words', 'views', 'links']) {
+        const card = gameState.playerSlots[slot];
+        if (card && !gameState.playerCards.includes(card)) {
+            gameState.playerCards.push(card);
+        }
+        gameState.playerSlots[slot] = null;
+
+        // Clear slot visuals
+        const playerSlot = document.getElementById(`player-${slot}`);
+        playerSlot.innerHTML = '';
+
         const opponentSlot = document.getElementById(`opp-${slot}`);
         opponentSlot.innerHTML = '';
+    }
+
+    // Rebuild the hand display
+    const playerHand = document.getElementById('player-hand');
+    playerHand.innerHTML = '';
+    gameState.playerCards.forEach(article => {
+        const cardElement = createCardElement(article, true);
+        playerHand.appendChild(cardElement);
     });
+
     
     // Hide results and buttons
     document.getElementById('battle-result').style.display = 'none';

@@ -406,6 +406,10 @@ body {
     background: #0645ad;
 }
 
+#event-special-card {
+    margin: 1rem auto;
+}
+
 /* Add subtle Wikipedia-style table styling */
 .stat-line:nth-child(even) {
     background: rgba(248, 249, 250, 0.5);
