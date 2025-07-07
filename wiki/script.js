@@ -245,61 +245,63 @@ function showEventScreen() {
     title.textContent = 'Special Event';
     desc.textContent = 'You found a rare Wikipedia article! Drag it into your hand if you want to keep it.';
 
-    // Clear previous card if any
-    const existingCard = document.getElementById('event-special-card');
-    if (existingCard) {
-        existingCard.remove();
-    }
+    // Remove existing special card if any
+    const oldCard = document.getElementById('event-special-card');
+    if (oldCard) oldCard.remove();
 
-    // Generate a new special card (not auto-added to playerCards)
+    // Remove temp hand if it exists
+    const oldHand = document.getElementById('event-player-hand');
+    if (oldHand) oldHand.remove();
+
+    // Create new special card
     const [specialCard] = getRandomArticles(1);
-    const cardElement = createCardElement(specialCard, true);
-    cardElement.id = 'event-special-card';
-    cardElement.classList.add('animated-pop-in'); // add animation
+    const specialCardElement = createCardElement(specialCard, true);
+    specialCardElement.id = 'event-special-card';
+    specialCardElement.classList.add('animated-pop-in');
 
-    // Allow drop into player-hand during this event
-    const playerHand = document.getElementById('player-hand');
-    playerHand.ondrop = (e) => {
+    // Create temporary player hand display
+    const handContainer = document.createElement('div');
+    handContainer.id = 'event-player-hand';
+    handContainer.className = 'player-hand';
+    handContainer.ondrop = (e) => {
         e.preventDefault();
         const articleTitle = e.dataTransfer.getData('text/plain');
 
         // Check if already in hand
-        if (gameState.playerCards.find(c => c.title === articleTitle)) return;
+        if (gameState.playerCards.some(card => card.title === articleTitle)) return;
 
-        // Only allow 7 or fewer cards
         if (gameState.playerCards.length >= 7) {
             alert("Your hand is full! Max 7 cards.");
             return;
         }
 
+        // Clone and add to player's hand
         const article = articlePool.find(a => a.title === articleTitle);
         if (article) {
             const clone = article.clone();
             gameState.playerCards.push(clone);
 
-            // Update visuals
-            const newCard = createCardElement(clone, true);
-            playerHand.appendChild(newCard);
+            // Add card visually
+            const cardEl = createCardElement(clone, true);
+            handContainer.appendChild(cardEl);
 
-            // Remove special card from event screen
-            const specialCardEl = document.getElementById('event-special-card');
-            if (specialCardEl) {
-                specialCardEl.remove();
-            }
+            // Remove special card
+            const toRemove = document.getElementById('event-special-card');
+            if (toRemove) toRemove.remove();
         }
     };
+    handContainer.ondragover = (e) => e.preventDefault();
 
-    playerHand.ondragover = (e) => e.preventDefault();
-
-    // Show the player's hand (fresh rebuild)
-    playerHand.innerHTML = '';
-    gameState.playerCards.forEach(article => {
-        const cardElement = createCardElement(article, true);
-        playerHand.appendChild(cardElement);
+    // Add current hand cards
+    gameState.playerCards.forEach(card => {
+        const cardElement = createCardElement(card, true);
+        handContainer.appendChild(cardElement);
     });
 
-    // Insert special card above the hand
-    eventScreen.insertBefore(cardElement, document.getElementById('event-continue-btn'));
+    // Insert special card and hand above Continue button
+    const continueBtn = document.getElementById('event-continue-btn');
+    eventScreen.insertBefore(specialCardElement, continueBtn);
+    eventScreen.insertBefore(handContainer, continueBtn);
 }
 
 
