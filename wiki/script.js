@@ -777,6 +777,38 @@ function updateCardVisuals(updatedCard) {
     });
 }
 
+function autoWin() {
+    console.log("Auto-Win triggered");
+
+    // Skip to victory flow
+    gameState.wins++;
+    gameState.score += gameState.round * 100;
+
+    // Reveal a random attribute as a reward
+    revealRandomAttribute();
+
+    // Hide battle button and show next round
+    document.getElementById('battle-btn').style.display = 'none';
+
+    // Fake battle result for UI (optional)
+    const resultGrid = document.getElementById('result-grid');
+    resultGrid.innerHTML = `
+        <div class="result-item result-win"><strong>WORDS</strong><br>✅ WIN<br><small>Auto-win</small></div>
+        <div class="result-item result-win"><strong>VIEWS</strong><br>✅ WIN<br><small>Auto-win</small></div>
+        <div class="result-item result-win"><strong>LINKS</strong><br>✅ WIN<br><small>Auto-win</small></div>
+    `;
+
+    const overallResult = document.getElementById('overall-result');
+    overallResult.innerHTML = `
+        <h4>🎉 Auto-Victory!</h4>
+        <p>You won 3/3 battles</p>
+    `;
+
+    document.getElementById('battle-result').style.display = 'block';
+    document.getElementById('next-round-btn').style.display = 'inline-block';
+}
+
+
 // Handle drag events
 document.addEventListener('dragend', (e) => {
     e.target.classList.remove('dragging');
