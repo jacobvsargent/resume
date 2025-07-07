@@ -239,30 +239,69 @@ function showBattleScreen(event) {
 function showEventScreen() {
     const eventScreen = document.getElementById('event-screen');
     eventScreen.style.display = 'block';
-    
+
     const title = document.getElementById('event-title');
     const desc = document.getElementById('event-description');
     title.textContent = 'Special Event';
-    desc.textContent = 'You found a rare article! Drag it into your hand or over a slot to replace one of your current cards.';
+    desc.textContent = 'You found a rare Wikipedia article! Drag it into your hand if you want to keep it.';
 
-    // Clear previous event card if present
-    let existingCard = document.getElementById('event-special-card');
+    // Clear previous card if any
+    const existingCard = document.getElementById('event-special-card');
     if (existingCard) {
         existingCard.remove();
     }
 
-    // Generate and display a single random article
+    // Generate a new special card (not auto-added to playerCards)
     const [specialCard] = getRandomArticles(1);
-    const cardElement = createCardElement(specialCard, true); // draggable = true
+    const cardElement = createCardElement(specialCard, true);
     cardElement.id = 'event-special-card';
+    cardElement.classList.add('animated-pop-in'); // add animation
 
-    // Insert the card element before the Continue button
-    const continueBtn = document.getElementById('event-continue-btn');
-    eventScreen.insertBefore(cardElement, continueBtn);
+    // Allow drop into player-hand during this event
+    const playerHand = document.getElementById('player-hand');
+    playerHand.ondrop = (e) => {
+        e.preventDefault();
+        const articleTitle = e.dataTransfer.getData('text/plain');
 
-    // Add it to player's cards so it's recognized during drag/drop
-    gameState.playerCards.push(specialCard);
+        // Check if already in hand
+        if (gameState.playerCards.find(c => c.title === articleTitle)) return;
+
+        // Only allow 7 or fewer cards
+        if (gameState.playerCards.length >= 7) {
+            alert("Your hand is full! Max 7 cards.");
+            return;
+        }
+
+        const article = articlePool.find(a => a.title === articleTitle);
+        if (article) {
+            const clone = article.clone();
+            gameState.playerCards.push(clone);
+
+            // Update visuals
+            const newCard = createCardElement(clone, true);
+            playerHand.appendChild(newCard);
+
+            // Remove special card from event screen
+            const specialCardEl = document.getElementById('event-special-card');
+            if (specialCardEl) {
+                specialCardEl.remove();
+            }
+        }
+    };
+
+    playerHand.ondragover = (e) => e.preventDefault();
+
+    // Show the player's hand (fresh rebuild)
+    playerHand.innerHTML = '';
+    gameState.playerCards.forEach(article => {
+        const cardElement = createCardElement(article, true);
+        playerHand.appendChild(cardElement);
+    });
+
+    // Insert special card above the hand
+    eventScreen.insertBefore(cardElement, document.getElementById('event-continue-btn'));
 }
+
 
 
 function showShopScreen() {

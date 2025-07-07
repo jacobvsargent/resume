@@ -1,10 +1,12 @@
 FIXES
 - looks like cards reset after each round
 - stat reveal may or may not work?
+- move the Battle thing into the top bars
 - 
 
 FEATURES
 - implement wikiapi
+- items (one time and permanent)
 - replace Links with Instances of a specific word the articles share in common
 - console.logging
 - game over should reveal all stats methinks
