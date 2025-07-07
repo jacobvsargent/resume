@@ -237,10 +237,33 @@ function showBattleScreen(event) {
 }
 
 function showEventScreen() {
-    document.getElementById('event-screen').style.display = 'block';
-    document.getElementById('event-title').textContent = 'Special Event';
-    document.getElementById('event-description').textContent = 'This is a special event placeholder.';
+    const eventScreen = document.getElementById('event-screen');
+    eventScreen.style.display = 'block';
+    
+    const title = document.getElementById('event-title');
+    const desc = document.getElementById('event-description');
+    title.textContent = 'Special Event';
+    desc.textContent = 'You found a rare article! Drag it into your hand or over a slot to replace one of your current cards.';
+
+    // Clear previous event card if present
+    let existingCard = document.getElementById('event-special-card');
+    if (existingCard) {
+        existingCard.remove();
+    }
+
+    // Generate and display a single random article
+    const [specialCard] = getRandomArticles(1);
+    const cardElement = createCardElement(specialCard, true); // draggable = true
+    cardElement.id = 'event-special-card';
+
+    // Insert the card element before the Continue button
+    const continueBtn = document.getElementById('event-continue-btn');
+    eventScreen.insertBefore(cardElement, continueBtn);
+
+    // Add it to player's cards so it's recognized during drag/drop
+    gameState.playerCards.push(specialCard);
 }
+
 
 function showShopScreen() {
     document.getElementById('shop-screen').style.display = 'block';

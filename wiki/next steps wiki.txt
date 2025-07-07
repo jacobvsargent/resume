@@ -1,0 +1,11 @@
+FIXES
+- looks like cards reset after each round
+- stat reveal may or may not work?
+- 
+
+FEATURES
+- implement wikiapi
+- replace Links with Instances of a specific word the articles share in common
+- console.logging
+- game over should reveal all stats methinks
+- how does the player get better cards? shop/random event/steal from opponent?
