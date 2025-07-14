@@ -474,6 +474,57 @@ body {
     display: block;
 }
 
+.sell-zone {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 80px;
+    height: 60px;
+    background-color: #dc3545;
+    color: white;
+    border: 2px dashed #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    z-index: 1000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sell-zone:hover {
+    background-color: #c82333;
+    transform: scale(1.1);
+}
+
+.sell-zone.drag-over {
+    background-color: #28a745;
+    border-color: #28a745;
+    transform: scale(1.2);
+}
+
+.sell-feedback {
+    animation: fadeInUp 0.5s ease-out, fadeOut 0.5s ease-in 1.5s;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+    }
+}
+
 
 /* Add subtle Wikipedia-style table styling */
 .stat-line:nth-child(even) {

@@ -4,7 +4,7 @@ class WikipediaArticle {
         this.words = words;
         this.views = views;
         this.links = links;
-        this.buyValue = buyValue || Math.floor(Math.random() * 5) + 1; // 1-5 tokens
+        this.buyValue = buyValue || Math.floor(Math.random() * 5) + 5; // 6-10 tokens
         this.sellValue = sellValue || Math.floor(this.buyValue * 0.6); // 60% of buy value
         this.revealed = {
             words: false,
