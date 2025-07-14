@@ -368,7 +368,6 @@ function createCardElement(card, isPlayer = true) {
         cardEl.ondragstart = (e) => dragStart(e, card);
     }
 
-    // Only show title visibly
     cardEl.innerHTML = `
         <div class="card-title">${card.title}</div>
         <div class="card-tooltip">
@@ -377,18 +376,26 @@ function createCardElement(card, isPlayer = true) {
                 <div><strong>One-Time:</strong> ${card.oneTime ? 'Yes' : 'No'}</div>
                 <div><strong>Effect:</strong> ${card.effect}</div>
             ` : `
-                <div><strong>Words:</strong> ${card.revealed.words ? card.words.toLocaleString() : '???'}</div>
-                <div><strong>Views:</strong> ${card.revealed.views ? card.views.toLocaleString() : '???'}</div>
-                <div><strong>Links:</strong> ${card.revealed.links ? card.links : '???'}</div>
+                <div><strong>Words:</strong> ${card.words.toLocaleString()}</div>
+                <div><strong>Views:</strong> ${card.views.toLocaleString()}</div>
+                <div><strong>Links:</strong> ${card.links}</div>
             `}
         </div>
     `;
 
-    // Optional perk visual color
+    // Show tooltip on hover
+    cardEl.addEventListener('mouseenter', () => {
+        const tooltip = cardEl.querySelector('.card-tooltip');
+        tooltip.style.display = 'block';
+    });
+    cardEl.addEventListener('mouseleave', () => {
+        const tooltip = cardEl.querySelector('.card-tooltip');
+        tooltip.style.display = 'none';
+    });
+
     if (isPerk) {
         cardEl.style.background = card.oneTime ? '#f3e5f5' : '#fff3e0';
     }
-
     return cardEl;
 }
 
@@ -460,121 +467,65 @@ function allowDrop(event) {
 function drop(event, slotType) {
     event.preventDefault();
     event.target.classList.remove('drag-over');
-    
+
+    // Retrieve drag data (fallback for plain text)
     let dragData;
     try {
         dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
     } catch {
-        // fallback for legacy drag data
         dragData = { title: event.dataTransfer.getData('text/plain'), type: 'article' };
     }
     const cardTitle = dragData.title;
-    const cardType = dragData.type;
-    
-    // Find the actual article object
+
+    // Find the actual article object and its source (slot or hand)
     let actualArticle = null;
     let sourceLocation = null;
-    
-    // Check if it's from player slots
+
+    // Check if dragging from a slot
     for (const [slot, card] of Object.entries(gameState.playerSlots)) {
         if (card && card.title === cardTitle) {
             actualArticle = card;
-            sourceLocation = { type: 'slot', slot: slot };
+            sourceLocation = { type: 'slot', slot };
             break;
         }
     }
-    
-    // Check if it's from player hand
+
+    // If not found in slots, check hand
     if (!actualArticle) {
-        actualArticle = gameState.playerCards.find(card => card.title === articleTitle);
+        actualArticle = gameState.playerCards.find(card => card.title === cardTitle);
         if (actualArticle) {
             sourceLocation = { type: 'hand' };
         }
     }
-    
+
+    // If still not found, abort
     if (!actualArticle) return;
-    
-    // Check if target slot has a card
+
+    // If there's already a card in the drop slot, swap it back to source
     const existingCard = gameState.playerSlots[slotType];
-    
-    if (sourceLocation.type === 'slot') {
-        // Moving from slot to slot
-        if (existingCard) {
-            // Swap cards
+    if (existingCard) {
+        if (sourceLocation.type === 'slot') {
             gameState.playerSlots[sourceLocation.slot] = existingCard;
-            gameState.playerSlots[slotType] = actualArticle;
-            
-            // Update visuals
-            const sourceSlotElement = document.getElementById(`player-${sourceLocation.slot}`);
-            const targetSlotElement = document.getElementById(`player-${slotType}`);
-            
-            sourceSlotElement.innerHTML = '';
-            sourceSlotElement.appendChild(createCardElement(existingCard, true));
-            
-            targetSlotElement.innerHTML = '';
-            targetSlotElement.appendChild(createCardElement(actualArticle, true));
         } else {
-            // Moving to empty slot
-            gameState.playerSlots[sourceLocation.slot] = null;
-            gameState.playerSlots[slotType] = actualArticle;
-            
-            // Update visuals
-            const sourceSlotElement = document.getElementById(`player-${sourceLocation.slot}`);
-            const targetSlotElement = document.getElementById(`player-${slotType}`);
-            
-            sourceSlotElement.innerHTML = '';
-            targetSlotElement.innerHTML = '';
-            targetSlotElement.appendChild(createCardElement(actualArticle, true));
+            gameState.playerCards.push(existingCard);
         }
+    }
+
+    // Place the dragged card into the new slot
+    gameState.playerSlots[slotType] = actualArticle;
+
+    // Remove from original location
+    if (sourceLocation.type === 'slot') {
+        gameState.playerSlots[sourceLocation.slot] = null;
     } else {
-        // Moving from hand to slot
-        if (existingCard) {
-            // Put existing card back to hand
-            gameState.playerSlots[slotType] = actualArticle;
-            
-            // Update slot
-            const targetSlotElement = document.getElementById(`player-${slotType}`);
-            targetSlotElement.innerHTML = '';
-            targetSlotElement.appendChild(createCardElement(actualArticle, true));
-            
-            // Remove from hand and add existing card to hand
-            const playerHand = document.getElementById('player-hand');
-            const cards = playerHand.querySelectorAll('.card');
-            cards.forEach(card => {
-                if (card.querySelector('.card-title').textContent === actualArticle.title) {
-                    card.remove();
-                }
-            });
-            
-            // Add existing card to hand
-            const existingCardElement = createCardElement(existingCard, true);
-            playerHand.appendChild(existingCardElement);
-        } else {
-            // Simple placement
-            gameState.playerSlots[slotType] = actualArticle;
-            
-            // Update slot
-            const targetSlotElement = document.getElementById(`player-${slotType}`);
-            targetSlotElement.innerHTML = '';
-            targetSlotElement.appendChild(createCardElement(actualArticle, true));
-            
-            // Remove from hand
-            const playerHand = document.getElementById('player-hand');
-            const cards = playerHand.querySelectorAll('.card');
-            cards.forEach(card => {
-                if (card.querySelector('.card-title').textContent === actualArticle.title) {
-                    card.remove();
-                }
-            });
-        }
+        gameState.playerCards = gameState.playerCards.filter(c => c.title !== cardTitle);
     }
-    
-    // Check if all slots are filled
-    const filledSlots = Object.values(gameState.playerSlots).filter(slot => slot !== null);
-    if (filledSlots.length === 3) {
-        document.getElementById('battle-btn').disabled = false;
-    }
+
+    // Refresh UI
+    renderPlayerSlots();
+    renderPlayerHand();
 }
+
 
 function applyPassivePerks() {
     for (const card of gameState.playerCards) {
