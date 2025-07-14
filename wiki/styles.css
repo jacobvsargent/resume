@@ -207,6 +207,9 @@ body {
     position: relative;
     overflow: visible;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .card:hover {
@@ -238,24 +241,15 @@ body {
 }
 
 .card-title {
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: bold;
-    margin-bottom: 10px;
     line-height: 1.3;
-    height: 2.6rem;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
     color: #0645ad;
-    border-bottom: 1px solid #eaecf0;
-    padding-bottom: 5px;
-}
-
-.card-stats {
-    font-size: 0.8rem;
-    line-height: 1.4;
-    color: #54595d;
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    width: 100%;
 }
 
 .stat-line {
@@ -509,12 +503,6 @@ body {
     }
 }
 
-
-/* Add subtle Wikipedia-style table styling */
-.stat-line:nth-child(even) {
-    background: rgba(248, 249, 250, 0.5);
-}
-
 @media (max-width: 768px) {
     .stats-and-map {
         flex-direction: column;
@@ -553,12 +541,7 @@ body {
     }
     
     .card-title {
-        font-size: 0.8rem;
-        height: 2.2rem;
-    }
-    
-    .card-stats {
-        font-size: 0.7rem;
+        font-size: 0.9rem;
     }
     
     .map-icon {
