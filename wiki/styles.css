@@ -205,7 +205,7 @@ body {
     transition: all 0.2s ease;
     border: 1px solid #c8ccd1;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
@@ -218,6 +218,40 @@ body {
 .card.dragging {
     opacity: 0.6;
     transform: rotate(2deg);
+}
+
+.card-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.9);
+    color: white;
+    border-radius: 4px;
+    padding: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    font-size: 12px;
+    z-index: 1000;
+    display: none;
+    min-width: 150px;
+    margin-top: 5px;
+}
+
+.card:hover .card-tooltip {
+    display: block;
+}
+
+/* Perk card styling */
+.card.perk-card {
+    border: 2px solid #9c27b0;
+}
+
+.card.perk-card.one-time {
+    background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+}
+
+.card.perk-card:not(.one-time) {
+    background: linear-gradient(135deg, #fff3e0, #ffcc02);
 }
 
 .card-title {

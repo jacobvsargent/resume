@@ -395,39 +395,15 @@ function createCardElement(card, isPlayer = true) {
         <div class="card-tooltip">${tooltipContent}</div>
     `;
 
-    // Add hover event listeners
-    cardEl.addEventListener('mouseenter', (e) => {
-        const tooltip = e.currentTarget.querySelector('.card-tooltip');
-        if (tooltip) {
-            tooltip.style.display = 'block';
-            tooltip.style.position = 'absolute';
-            tooltip.style.zIndex = '1000';
-            tooltip.style.background = 'rgba(0,0,0,0.9)';
-            tooltip.style.color = 'white';
-            tooltip.style.padding = '8px';
-            tooltip.style.borderRadius = '4px';
-            tooltip.style.fontSize = '12px';
-            tooltip.style.minWidth = '150px';
-            tooltip.style.top = '100%';
-            tooltip.style.left = '50%';
-            tooltip.style.transform = 'translateX(-50%)';
-            tooltip.style.marginTop = '5px';
-        }
-    });
-
-    cardEl.addEventListener('mouseleave', (e) => {
-        const tooltip = e.currentTarget.querySelector('.card-tooltip');
-        if (tooltip) {
-            tooltip.style.display = 'none';
-        }
-    });
+    
 
     // Style perk cards differently
     if (isPerk) {
-        cardEl.style.background = card.oneTime ? 'linear-gradient(135deg, #f3e5f5, #e1bee7)' : 'linear-gradient(135deg, #fff3e0, #ffcc02)';
-        cardEl.style.border = '2px solid #9c27b0';
+        cardEl.classList.add('perk-card');
+        if (card.oneTime) {
+            cardEl.classList.add('one-time');
+        }
     }
-
     return cardEl;
 }
 
