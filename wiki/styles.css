@@ -465,7 +465,7 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     font-size: 0.75rem;
     white-space: nowrap;
-    z-index: 999;
+    z-index: 10000;
     display: none;
     min-width: 160px;
 }

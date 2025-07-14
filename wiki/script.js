@@ -1,9 +1,11 @@
 class WikipediaArticle {
-    constructor(title, words, views, links) {
+    constructor(title, words, views, links, buyValue = null, sellValue = null) {
         this.title = title;
         this.words = words;
         this.views = views;
         this.links = links;
+        this.buyValue = buyValue || Math.floor(Math.random() * 5) + 1; // 1-5 tokens
+        this.sellValue = sellValue || Math.floor(this.buyValue * 0.6); // 60% of buy value
         this.revealed = {
             words: false,
             views: false,
@@ -12,61 +14,11 @@ class WikipediaArticle {
     }
 
     clone() {
-        const cloned = new WikipediaArticle(this.title, this.words, this.views, this.links);
+        const cloned = new WikipediaArticle(this.title, this.words, this.views, this.links, this.buyValue, this.sellValue);
         cloned.revealed = { ...this.revealed };
         return cloned;
     }
 }
-
-// Sample Wikipedia articles with realistic stats
-const articlePool = [
-    new WikipediaArticle("United States", 4500, 950000, 420),
-    new WikipediaArticle("Van Halen", 1330, 28400, 72),
-    new WikipediaArticle("Giraffe", 745, 13456, 29),
-    new WikipediaArticle("Tsagaan-Uul District", 421, 392, 12),
-    new WikipediaArticle("Photosynthesis", 840, 21753, 43),
-    new WikipediaArticle("Black Holes", 1532, 38762, 112),
-    new WikipediaArticle("World War II", 2431, 49821, 158),
-    new WikipediaArticle("Mount Everest", 960, 14532, 51),
-    new WikipediaArticle("Python (programming language)", 2180, 68241, 203),
-    new WikipediaArticle("Quantum Mechanics", 2111, 35211, 94),
-    new WikipediaArticle("Internet", 2388, 80315, 187),
-    new WikipediaArticle("Gravitational Wave", 1104, 15428, 37),
-    new WikipediaArticle("K-pop", 1120, 24122, 52),
-    new WikipediaArticle("French Revolution", 1345, 19328, 76),
-    new WikipediaArticle("Mariana Trench", 1231, 11922, 48),
-    new WikipediaArticle("Lawn Mower Racing", 410, 891, 9),
-    new WikipediaArticle("North Korea", 2080, 49183, 105),
-    new WikipediaArticle("Banana", 680, 15723, 21),
-    new WikipediaArticle("Renaissance", 1754, 23094, 77),
-    new WikipediaArticle("Battle of Hastings", 995, 18300, 41),
-    new WikipediaArticle("Fortnite", 1220, 42332, 96),
-    new WikipediaArticle("Keanu Reeves", 910, 24110, 44),
-    new WikipediaArticle("Toothpaste", 400, 7411, 17),
-    new WikipediaArticle("Solar System", 1205, 28941, 56),
-    new WikipediaArticle("List of Unusual Deaths", 890, 7343, 26),
-    new WikipediaArticle("Yurt", 533, 4821, 14),
-    new WikipediaArticle("Artificial Intelligence", 2261, 60127, 142),
-    new WikipediaArticle("Blue-Ringed Octopus", 687, 8123, 28),
-    new WikipediaArticle("Dust Bowl", 1033, 13092, 33),
-    new WikipediaArticle("Pluto (dwarf planet)", 1122, 21432, 51),
-    new WikipediaArticle("Coca-Cola", 1303, 39814, 62),
-    new WikipediaArticle("Borat", 780, 22433, 39),
-    new WikipediaArticle("List of People Who Disappeared Mysteriously", 1020, 13771, 27),
-    new WikipediaArticle("The Simpsons", 1420, 31542, 65),
-    new WikipediaArticle("DIY Biohacking", 550, 2920, 11),
-    new WikipediaArticle("Mongolian Throat Singing", 488, 5133, 18),
-    new WikipediaArticle("Game Boy Advance", 990, 15430, 36),
-    new WikipediaArticle("Neural Networks", 1381, 32942, 82),
-    new WikipediaArticle("Chernobyl Disaster", 1642, 28971, 67),
-    new WikipediaArticle("Avril Lavigne", 970, 19810, 40),
-    new WikipediaArticle("Shoelace Knot", 305, 2134, 8),
-    new WikipediaArticle("Quantum Entanglement", 1508, 17921, 46),
-    new WikipediaArticle("Tofu", 460, 6312, 19),
-    new WikipediaArticle("Eiffel Tower", 1190, 27451, 49),
-    new WikipediaArticle("Bagel", 610, 9021, 16),
-    new WikipediaArticle("Waffle House Index", 367, 1411, 10)
-];
 
 // Event types
 const EVENT_TYPES = {
@@ -85,29 +37,25 @@ const DIFFICULTY = {
 };
 
 class PerkCard {
-    constructor(title, playable, oneTime, effect) {
+    constructor(title, playable, oneTime, effect, buyValue = null, sellValue = null) {
         this.title = title;
         this.playable = playable;
         this.oneTime = oneTime;
         this.effect = effect;
+        this.buyValue = buyValue || Math.floor(Math.random() * 8) + 3; // 3-10 tokens
+        this.sellValue = sellValue || Math.floor(this.buyValue * 0.5); // 50% of buy value
     }
 
     clone() {
-        return new PerkCard(this.title, this.playable, this.oneTime, this.effect);
+        return new PerkCard(this.title, this.playable, this.oneTime, this.effect, this.buyValue, this.sellValue);
     }
 }
-
-const perkPool = [
-    new PerkCard("Wordsworth", false, false, "Multiply your card's Words count by 1.5x"),
-    new PerkCard("One-Hit Wonder", true, true, "Immediately win a Words battle once"),
-    // Add more perks here...
-];
-
 
 let gameState = {
     round: 1,
     wins: 0,
     score: 0,
+    tokens: 5,
     playerCards: [],
     opponentCards: [],
     playerSlots: { words: null, views: null, links: null },
@@ -254,6 +202,9 @@ function showBattleScreen(event) {
     
     // Deal cards for this battle
     dealCards();
+    
+    // Show sell zone
+    showSellZone();
 }
 
 function showEventScreen() {
@@ -342,14 +293,110 @@ function showEventScreen() {
     
     eventScreen.insertBefore(specialCardElement, continueBtn);
     eventScreen.insertBefore(handContainer, continueBtn);
+    
+    // Show sell zone
+    showSellZone();
 }
-
-
 
 function showShopScreen() {
     document.getElementById('shop-screen').style.display = 'block';
     document.getElementById('shop-title').textContent = '🛒 Shop';
     document.getElementById('shop-description').textContent = 'This is a shop placeholder.';
+    
+    // Show sell zone
+    showSellZone();
+}
+
+function showSellZone() {
+    // Create sell zone if it doesn't exist
+    let sellZone = document.getElementById('sell-zone');
+    if (!sellZone) {
+        sellZone = document.createElement('div');
+        sellZone.id = 'sell-zone';
+        sellZone.className = 'sell-zone';
+        sellZone.innerHTML = 'SELL';
+        sellZone.ondragover = allowDrop;
+        sellZone.ondrop = sellCard;
+        document.body.appendChild(sellZone);
+    }
+    sellZone.style.display = 'block';
+}
+
+function hideSellZone() {
+    const sellZone = document.getElementById('sell-zone');
+    if (sellZone) {
+        sellZone.style.display = 'none';
+    }
+}
+
+function sellCard(event) {
+    event.preventDefault();
+    event.target.classList.remove('drag-over');
+    
+    // Get card data
+    let dragData;
+    try {
+        dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+    } catch {
+        dragData = { title: event.dataTransfer.getData('text/plain'), type: 'article' };
+    }
+    
+    const cardTitle = dragData.title;
+    
+    // Find and remove card from player's collection
+    let soldCard = null;
+    
+    // Check slots first
+    for (const [slot, card] of Object.entries(gameState.playerSlots)) {
+        if (card && card.title === cardTitle) {
+            soldCard = card;
+            gameState.playerSlots[slot] = null;
+            break;
+        }
+    }
+    
+    // Check hand if not found in slots
+    if (!soldCard) {
+        const cardIndex = gameState.playerCards.findIndex(card => card.title === cardTitle);
+        if (cardIndex !== -1) {
+            soldCard = gameState.playerCards.splice(cardIndex, 1)[0];
+        }
+    }
+    
+    if (soldCard) {
+        // Add tokens
+        gameState.tokens += soldCard.sellValue;
+        
+        // Update UI
+        updateStats();
+        renderPlayerSlots();
+        renderPlayerHand();
+        updateBattleButtonState();
+        
+        // Show feedback
+        showSellFeedback(soldCard);
+    }
+}
+
+function showSellFeedback(card) {
+    const feedback = document.createElement('div');
+    feedback.className = 'sell-feedback';
+    feedback.textContent = `+${card.sellValue} tokens`;
+    feedback.style.position = 'fixed';
+    feedback.style.bottom = '120px';
+    feedback.style.right = '50px';
+    feedback.style.backgroundColor = '#4CAF50';
+    feedback.style.color = 'white';
+    feedback.style.padding = '10px';
+    feedback.style.borderRadius = '5px';
+    feedback.style.zIndex = '1000';
+    feedback.style.animation = 'fadeInUp 0.5s, fadeOut 0.5s 1.5s';
+    
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+        feedback.remove();
+    }, 2000);
 }
 
 function getRandomArticles(count) {
@@ -375,6 +422,8 @@ function createCardElement(card, isPlayer = true) {
             <div><strong>Playable:</strong> ${card.playable ? 'Yes' : 'No'}</div>
             <div><strong>One-Time:</strong> ${card.oneTime ? 'Yes' : 'No'}</div>
             <div><strong>Effect:</strong> ${card.effect}</div>
+            <div><strong>Buy:</strong> ${card.buyValue} tokens</div>
+            <div><strong>Sell:</strong> ${card.sellValue} tokens</div>
         `;
     } else {
         // For articles, show revealed stats or "???"
@@ -386,6 +435,8 @@ function createCardElement(card, isPlayer = true) {
             <div><strong>Words:</strong> ${wordsText}</div>
             <div><strong>Views:</strong> ${viewsText}</div>
             <div><strong>Links:</strong> ${linksText}</div>
+            <div><strong>Buy:</strong> ${card.buyValue} tokens</div>
+            <div><strong>Sell:</strong> ${card.sellValue} tokens</div>
         `;
     }
 
@@ -393,8 +444,6 @@ function createCardElement(card, isPlayer = true) {
         <div class="card-title">${card.title}</div>
         <div class="card-tooltip">${tooltipContent}</div>
     `;
-
-    
 
     // Style perk cards differently
     if (isPerk) {
@@ -405,7 +454,6 @@ function createCardElement(card, isPlayer = true) {
     }
     return cardEl;
 }
-
 
 function dealCards() {
     // Only deal new player cards if they don't exist (first round or after game over)
@@ -468,6 +516,7 @@ function allowDrop(event) {
     event.preventDefault();
     event.target.classList.add('drag-over');
 }
+
 function drop(event, slotType) {
     event.preventDefault();
     event.target.classList.remove('drag-over');
@@ -533,7 +582,6 @@ function drop(event, slotType) {
     renderPlayerHand();
     updateBattleButtonState();
 }
-
 
 function applyPassivePerks() {
     for (const card of gameState.playerCards) {
@@ -726,7 +774,6 @@ function nextRound() {
         playerHand.appendChild(cardElement);
     });
 
-    
     // Hide results and buttons
     document.getElementById('battle-result').style.display = 'none';
     document.getElementById('next-round-btn').style.display = 'none';
@@ -744,13 +791,14 @@ function nextRound() {
 
 function updateStats() {
     document.getElementById('round').textContent = gameState.round;
+    document.getElementById('tokens').textContent = gameState.tokens;
 }
-
 function restartGame() {
     gameState = {
         round: 1,
         wins: 0,
         score: 0,
+        tokens: 5,
         playerCards: [],
         opponentCards: [],
         playerSlots: { words: null, views: null, links: null },
@@ -772,6 +820,9 @@ function restartGame() {
         playerSlot.innerHTML = '';
         opponentSlot.innerHTML = '';
     });
+    
+    // Hide sell zone when game restarts
+    hideSellZone();
     
     updateStats();
     updateMapDisplay();
