@@ -28,6 +28,56 @@ const EVENT_TYPES = {
     BOSS: 'boss'
 };
 
+// Sample Wikipedia articles with realistic stats
+const articlePool = [
+    new WikipediaArticle("United States", 4500, 950000, 420),
+    new WikipediaArticle("Van Halen", 1330, 28400, 72),
+    new WikipediaArticle("Giraffe", 745, 13456, 29),
+    new WikipediaArticle("Tsagaan-Uul District", 421, 392, 12),
+    new WikipediaArticle("Photosynthesis", 840, 21753, 43),
+    new WikipediaArticle("Black Holes", 1532, 38762, 112),
+    new WikipediaArticle("World War II", 2431, 49821, 158),
+    new WikipediaArticle("Mount Everest", 960, 14532, 51),
+    new WikipediaArticle("Python (programming language)", 2180, 68241, 203),
+    new WikipediaArticle("Quantum Mechanics", 2111, 35211, 94),
+    new WikipediaArticle("Internet", 2388, 80315, 187),
+    new WikipediaArticle("Gravitational Wave", 1104, 15428, 37),
+    new WikipediaArticle("K-pop", 1120, 24122, 52),
+    new WikipediaArticle("French Revolution", 1345, 19328, 76),
+    new WikipediaArticle("Mariana Trench", 1231, 11922, 48),
+    new WikipediaArticle("Lawn Mower Racing", 410, 891, 9),
+    new WikipediaArticle("North Korea", 2080, 49183, 105),
+    new WikipediaArticle("Banana", 680, 15723, 21),
+    new WikipediaArticle("Renaissance", 1754, 23094, 77),
+    new WikipediaArticle("Battle of Hastings", 995, 18300, 41),
+    new WikipediaArticle("Fortnite", 1220, 42332, 96),
+    new WikipediaArticle("Keanu Reeves", 910, 24110, 44),
+    new WikipediaArticle("Toothpaste", 400, 7411, 17),
+    new WikipediaArticle("Solar System", 1205, 28941, 56),
+    new WikipediaArticle("List of Unusual Deaths", 890, 7343, 26),
+    new WikipediaArticle("Yurt", 533, 4821, 14),
+    new WikipediaArticle("Artificial Intelligence", 2261, 60127, 142),
+    new WikipediaArticle("Blue-Ringed Octopus", 687, 8123, 28),
+    new WikipediaArticle("Dust Bowl", 1033, 13092, 33),
+    new WikipediaArticle("Pluto (dwarf planet)", 1122, 21432, 51),
+    new WikipediaArticle("Coca-Cola", 1303, 39814, 62),
+    new WikipediaArticle("Borat", 780, 22433, 39),
+    new WikipediaArticle("List of People Who Disappeared Mysteriously", 1020, 13771, 27),
+    new WikipediaArticle("The Simpsons", 1420, 31542, 65),
+    new WikipediaArticle("DIY Biohacking", 550, 2920, 11),
+    new WikipediaArticle("Mongolian Throat Singing", 488, 5133, 18),
+    new WikipediaArticle("Game Boy Advance", 990, 15430, 36),
+    new WikipediaArticle("Neural Networks", 1381, 32942, 82),
+    new WikipediaArticle("Chernobyl Disaster", 1642, 28971, 67),
+    new WikipediaArticle("Avril Lavigne", 970, 19810, 40),
+    new WikipediaArticle("Shoelace Knot", 305, 2134, 8),
+    new WikipediaArticle("Quantum Entanglement", 1508, 17921, 46),
+    new WikipediaArticle("Tofu", 460, 6312, 19),
+    new WikipediaArticle("Eiffel Tower", 1190, 27451, 49),
+    new WikipediaArticle("Bagel", 610, 9021, 16),
+    new WikipediaArticle("Waffle House Index", 367, 1411, 10)
+];
+
 // Difficulty levels
 const DIFFICULTY = {
     EASY: 'easy',
@@ -50,6 +100,12 @@ class PerkCard {
         return new PerkCard(this.title, this.playable, this.oneTime, this.effect, this.buyValue, this.sellValue);
     }
 }
+
+const perkPool = [
+    new PerkCard("Wordsworth", false, false, "Multiply your card's Words count by 1.5x"),
+    new PerkCard("One-Hit Wonder", true, true, "Immediately win a Words battle once"),
+    // Add more perks here...
+];
 
 let gameState = {
     round: 1,
