@@ -477,7 +477,7 @@ function drop(event, slotType) {
     
     // Check if it's from player slots
     for (const [slot, card] of Object.entries(gameState.playerSlots)) {
-        if (card && card.title === articleTitle) {
+        if (card && card.title === cardTitle) {
             actualArticle = card;
             sourceLocation = { type: 'slot', slot: slot };
             break;

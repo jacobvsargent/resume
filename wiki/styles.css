@@ -418,6 +418,28 @@ body {
     border: 2px dashed #6a1b9a;
 }
 
+.card-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    color: #222;
+    border: 1px solid #c8ccd1;
+    border-radius: 4px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 999;
+    display: none;
+    min-width: 160px;
+}
+
+.card:hover .card-tooltip {
+    display: block;
+}
+
 
 /* Add subtle Wikipedia-style table styling */
 .stat-line:nth-child(even) {
