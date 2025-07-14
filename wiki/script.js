@@ -288,10 +288,10 @@ function showEventScreen() {
     handContainer.className = 'player-hand';
     handContainer.ondrop = (e) => {
         e.preventDefault();
-        const articleTitle = e.dataTransfer.getData('text/plain');
+        let { title: cardTitle, type: cardType } = JSON.parse(e.dataTransfer.getData('text/plain'));
 
         // Check if already in hand
-        if (gameState.playerCards.some(card => card.title === articleTitle)) return;
+        if (gameState.playerCards.some(card => card.title === cardTitle)) return;
 
         if (gameState.playerCards.length >= 7) {
             alert("Your hand is full! Max 7 cards.");
@@ -299,19 +299,25 @@ function showEventScreen() {
         }
 
         // Clone and add to player's hand
-        const article = articlePool.find(a => a.title === articleTitle);
-        if (article) {
-            const clone = article.clone();
-            gameState.playerCards.push(clone);
+        let card;
+        if (cardType === 'article') {
+            card = articlePool.find(a => a.title === cardTitle)?.clone();
+        } else if (cardType === 'perk') {
+            card = perkPool.find(p => p.title === cardTitle)?.clone();
+        }
+
+        if (card) {
+            gameState.playerCards.push(card);
 
             // Add card visually
-            const cardEl = createCardElement(clone, true);
+            const cardEl = createCardElement(card, true);
             handContainer.appendChild(cardEl);
 
             // Remove special card
             const toRemove = document.getElementById('event-special-card');
             if (toRemove) toRemove.remove();
         }
+
     };
     handContainer.ondragover = (e) => e.preventDefault();
 
@@ -446,10 +452,12 @@ function dealCards() {
     document.getElementById('new-game-btn').style.display = 'none';
 }
 
-function dragStart(event, article) {
-    event.dataTransfer.setData('text/plain', article.title);
+function dragStart(event, card) {
+    const type = card instanceof PerkCard ? 'perk' : 'article';
+    event.dataTransfer.setData('text/plain', JSON.stringify({ title: card.title, type }));
     event.target.classList.add('dragging');
 }
+
 
 function allowDrop(event) {
     event.preventDefault();
@@ -567,8 +575,29 @@ function drop(event, slotType) {
     }
 }
 
+function applyPassivePerks() {
+    for (const card of gameState.playerCards) {
+        if (card instanceof PerkCard && !card.playable) {
+            if (card.title === "Wordsworth") {
+                // Multiply words of all slotted cards
+                for (const slot of ['words', 'views', 'links']) {
+                    const cardInSlot = gameState.playerSlots[slot];
+                    if (cardInSlot) {
+                        cardInSlot.words = Math.floor(cardInSlot.words * 1.5);
+                        cardInSlot.revealed.words = true; // ensure visible
+                    }
+                }
+            }
+
+            // TODO: Add other passive perk effects here
+        }
+    }
+}
+
 function startBattle() {
     if (gameState.battleInProgress) return;
+
+    applyPassivePerks()
     
     gameState.battleInProgress = true;
     document.getElementById('battle-btn').style.display = 'none';
