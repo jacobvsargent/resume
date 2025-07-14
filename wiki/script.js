@@ -360,45 +360,38 @@ function getRandomArticles(count) {
 
 function createCardElement(card, isPlayer = true) {
     const isPerk = card instanceof PerkCard;
-
     const cardEl = document.createElement('div');
     cardEl.className = 'card';
-    
-    // Style by perk type
-    if (isPerk) {
-        cardEl.style.background = card.oneTime ? '#f3e5f5' : '#fff3e0'; // light purple or orange
-    }
 
     if (isPlayer) {
         cardEl.draggable = true;
         cardEl.ondragstart = (e) => dragStart(e, card);
     }
 
+    // Only show title visibly
+    cardEl.innerHTML = `
+        <div class="card-title">${card.title}</div>
+        <div class="card-tooltip">
+            ${isPerk ? `
+                <div><strong>Playable:</strong> ${card.playable ? 'Yes' : 'No'}</div>
+                <div><strong>One-Time:</strong> ${card.oneTime ? 'Yes' : 'No'}</div>
+                <div><strong>Effect:</strong> ${card.effect}</div>
+            ` : `
+                <div><strong>Words:</strong> ${card.revealed.words ? card.words.toLocaleString() : '???'}</div>
+                <div><strong>Views:</strong> ${card.revealed.views ? card.views.toLocaleString() : '???'}</div>
+                <div><strong>Links:</strong> ${card.revealed.links ? card.links : '???'}</div>
+            `}
+        </div>
+    `;
+
+    // Optional perk visual color
     if (isPerk) {
-        cardEl.innerHTML = `
-            <div class="card-title">${card.title}</div>
-            <div class="card-stats">
-                <div class="stat-line"><span>Type:</span> <span>${card.playable ? 'Playable' : 'Passive'}</span></div>
-                <div class="stat-line"><span>Effect:</span> <span>${card.effect}</span></div>
-            </div>
-        `;
-    } else {
-        const words = card.revealed.words ? card.words.toLocaleString() : '???';
-        const views = card.revealed.views ? card.views.toLocaleString() : '???';
-        const links = card.revealed.links ? card.links : '???';
-        
-        cardEl.innerHTML = `
-            <div class="card-title">${card.title}</div>
-            <div class="card-stats">
-                <div class="stat-line"><span>Words:</span> <span>${words}</span></div>
-                <div class="stat-line"><span>Views:</span> <span>${views}</span></div>
-                <div class="stat-line"><span>Links:</span> <span>${links}</span></div>
-            </div>
-        `;
+        cardEl.style.background = card.oneTime ? '#f3e5f5' : '#fff3e0';
     }
 
     return cardEl;
 }
+
 
 
 function dealCards() {
@@ -468,7 +461,15 @@ function drop(event, slotType) {
     event.preventDefault();
     event.target.classList.remove('drag-over');
     
-    const articleTitle = event.dataTransfer.getData('text/plain');
+    let dragData;
+    try {
+        dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
+    } catch {
+        // fallback for legacy drag data
+        dragData = { title: event.dataTransfer.getData('text/plain'), type: 'article' };
+    }
+    const cardTitle = dragData.title;
+    const cardType = dragData.type;
     
     // Find the actual article object
     let actualArticle = null;
