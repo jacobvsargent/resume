@@ -252,9 +252,11 @@ function showBattleScreen(event) {
     // Update difficulty display
     const difficultyElement = document.getElementById('difficulty-level');
     const difficultyContainer = document.getElementById('battle-difficulty');
-    
-    difficultyElement.textContent = event.difficulty.charAt(0).toUpperCase() + event.difficulty.slice(1);
-    difficultyContainer.className = `battle-difficulty difficulty-${event.difficulty}`;
+
+    if (difficultyElement) {
+        difficultyElement.textContent = event.difficulty.charAt(0).toUpperCase() + event.difficulty.slice(1);
+        difficultyContainer.className = `battle-difficulty difficulty-${event.difficulty}`;
+    }
     
     // Deal cards for this battle
     dealCards();
