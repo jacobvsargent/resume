@@ -466,7 +466,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 40px;
+    font-size: 48px;
     z-index: 1000;
     cursor: pointer;
     transition: all 0.3s ease;
