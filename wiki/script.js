@@ -259,29 +259,29 @@ function showBattleScreen(event) {
 function showEventScreen() {
     const eventScreen = document.getElementById('event-screen');
     eventScreen.style.display = 'block';
-
     const title = document.getElementById('event-title');
     const desc = document.getElementById('event-description');
     title.textContent = 'Special Event';
     desc.textContent = 'You found a rare Wikipedia article! Drag it into your hand if you want to keep it.';
-
+    
+    // Initialize reroll count if not exists
+    if (!gameState.rerollCount) {
+        gameState.rerollCount = 3;
+    }
+    
     // Remove existing special card if any
     const oldCard = document.getElementById('event-special-card');
     if (oldCard) oldCard.remove();
-
     // Remove temp hand if it exists
     const oldHand = document.getElementById('event-player-hand');
     if (oldHand) oldHand.remove();
-
     // Create new special card
     const isPerk = Math.random() < 0.5;
     const specialCard = isPerk ? perkPool[Math.floor(Math.random() * perkPool.length)].clone()
                            : getRandomArticles(1)[0];
-
     const specialCardElement = createCardElement(specialCard, true);
     specialCardElement.id = 'event-special-card';
     specialCardElement.classList.add('animated-pop-in');
-
     // Create temporary player hand display
     const handContainer = document.createElement('div');
     handContainer.id = 'event-player-hand';
@@ -289,15 +289,12 @@ function showEventScreen() {
     handContainer.ondrop = (e) => {
         e.preventDefault();
         let { title: cardTitle, type: cardType } = JSON.parse(e.dataTransfer.getData('text/plain'));
-
         // Check if already in hand
         if (gameState.playerCards.some(card => card.title === cardTitle)) return;
-
         if (gameState.playerCards.length >= 7) {
             alert("Your hand is full! Max 7 cards.");
             return;
         }
-
         // Clone and add to player's hand
         let card;
         if (cardType === 'article') {
@@ -305,42 +302,44 @@ function showEventScreen() {
         } else if (cardType === 'perk') {
             card = perkPool.find(p => p.title === cardTitle)?.clone();
         }
-
         if (card) {
             gameState.playerCards.push(card);
-
             // Add card visually
             const cardEl = createCardElement(card, true);
             handContainer.appendChild(cardEl);
-
             // Remove special card
             const toRemove = document.getElementById('event-special-card');
             if (toRemove) toRemove.remove();
+            // Remove reroll button when card is taken
+            const rerollBtn = document.getElementById('reroll-btn');
+            if (rerollBtn) rerollBtn.remove();
         }
-
     };
     handContainer.ondragover = (e) => e.preventDefault();
-
     // Add current hand cards
     gameState.playerCards.forEach(card => {
         const cardElement = createCardElement(card, true);
         handContainer.appendChild(cardElement);
     });
-
     // Insert special card and hand above Continue button
     const continueBtn = document.getElementById('event-continue-btn');
-
-    // Create Reroll button
+    
+    // Create/Update Reroll button
     let rerollBtn = document.getElementById('reroll-btn');
-    if (!rerollBtn) {
+    if (rerollBtn) rerollBtn.remove(); // Remove existing button
+    
+    if (gameState.rerollCount > 0) {
         rerollBtn = document.createElement('button');
-        rerollBtn.textContent = 'Reroll';
+        rerollBtn.textContent = `Reroll ${gameState.rerollCount}X`;
         rerollBtn.className = 'button';
         rerollBtn.id = 'reroll-btn';
-        rerollBtn.onclick = () => showEventScreen(); // just rerun the screen
+        rerollBtn.onclick = () => {
+            gameState.rerollCount--;
+            showEventScreen();
+        };
         eventScreen.insertBefore(rerollBtn, continueBtn);
     }
-
+    
     eventScreen.insertBefore(specialCardElement, continueBtn);
     eventScreen.insertBefore(handContainer, continueBtn);
 }
