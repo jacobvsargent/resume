@@ -274,7 +274,7 @@ function showEventScreen() {
     desc.textContent = 'You found a rare Wikipedia article! Drag it into your hand if you want to keep it.';
     
     // Initialize reroll count if not exists
-    if (!gameState.rerollCount) {
+    if (gameState.rerollCount === undefined) {
         gameState.rerollCount = 3;
     }
     

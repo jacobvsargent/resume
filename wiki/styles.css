@@ -430,7 +430,7 @@ body {
 }
 
 .card-tooltip {
-    position: relative;
+    position: absolute;
     top: 100%;
     left: 50%;
     transform: translateX(-50%);
