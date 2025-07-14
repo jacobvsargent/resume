@@ -84,6 +84,26 @@ const DIFFICULTY = {
     BOSS: 'boss'
 };
 
+class PerkCard {
+    constructor(title, playable, oneTime, effect) {
+        this.title = title;
+        this.playable = playable;
+        this.oneTime = oneTime;
+        this.effect = effect;
+    }
+
+    clone() {
+        return new PerkCard(this.title, this.playable, this.oneTime, this.effect);
+    }
+}
+
+const perkPool = [
+    new PerkCard("Wordsworth", false, false, "Multiply your card's Words count by 1.5x"),
+    new PerkCard("One-Hit Wonder", true, true, "Immediately win a Words battle once"),
+    // Add more perks here...
+];
+
+
 let gameState = {
     round: 1,
     wins: 0,
@@ -254,7 +274,10 @@ function showEventScreen() {
     if (oldHand) oldHand.remove();
 
     // Create new special card
-    const [specialCard] = getRandomArticles(1);
+    const isPerk = Math.random() < 0.5;
+    const specialCard = isPerk ? perkPool[Math.floor(Math.random() * perkPool.length)].clone()
+                           : getRandomArticles(1)[0];
+
     const specialCardElement = createCardElement(specialCard, true);
     specialCardElement.id = 'event-special-card';
     specialCardElement.classList.add('animated-pop-in');
@@ -300,6 +323,18 @@ function showEventScreen() {
 
     // Insert special card and hand above Continue button
     const continueBtn = document.getElementById('event-continue-btn');
+
+    // Create Reroll button
+    let rerollBtn = document.getElementById('reroll-btn');
+    if (!rerollBtn) {
+        rerollBtn = document.createElement('button');
+        rerollBtn.textContent = 'Reroll';
+        rerollBtn.className = 'button';
+        rerollBtn.id = 'reroll-btn';
+        rerollBtn.onclick = () => showEventScreen(); // just rerun the screen
+        eventScreen.insertBefore(rerollBtn, continueBtn);
+    }
+
     eventScreen.insertBefore(specialCardElement, continueBtn);
     eventScreen.insertBefore(handContainer, continueBtn);
 }
@@ -317,47 +352,48 @@ function getRandomArticles(count) {
     return shuffled.slice(0, count).map(article => article.clone());
 }
 
-function createCardElement(article, isPlayer = true) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    if (isPlayer) {
-        card.draggable = true;
-        card.ondragstart = (e) => dragStart(e, article);
+function createCardElement(card, isPlayer = true) {
+    const isPerk = card instanceof PerkCard;
+
+    const cardEl = document.createElement('div');
+    cardEl.className = 'card';
+    
+    // Style by perk type
+    if (isPerk) {
+        cardEl.style.background = card.oneTime ? '#f3e5f5' : '#fff3e0'; // light purple or orange
     }
-    
-    // Format values based on whether they're revealed
-    const wordsDisplay = article.revealed.words ? 
-        `<span class="stat-value">${article.words.toLocaleString()}</span>` : 
-        `<span class="stat-hidden">???</span>`;
-    
-    const viewsDisplay = article.revealed.views ? 
-        `<span class="stat-value">${article.views.toLocaleString()}</span>` : 
-        `<span class="stat-hidden">???</span>`;
-    
-    const linksDisplay = article.revealed.links ? 
-        `<span class="stat-value">${article.links}</span>` : 
-        `<span class="stat-hidden">???</span>`;
-    
-    card.innerHTML = `
-        <div class="card-title">${article.title}</div>
-        <div class="card-stats">
-            <div class="stat-line">
-                <span>Words:</span>
-                ${wordsDisplay}
+
+    if (isPlayer) {
+        cardEl.draggable = true;
+        cardEl.ondragstart = (e) => dragStart(e, card);
+    }
+
+    if (isPerk) {
+        cardEl.innerHTML = `
+            <div class="card-title">${card.title}</div>
+            <div class="card-stats">
+                <div class="stat-line"><span>Type:</span> <span>${card.playable ? 'Playable' : 'Passive'}</span></div>
+                <div class="stat-line"><span>Effect:</span> <span>${card.effect}</span></div>
             </div>
-            <div class="stat-line">
-                <span>Views:</span>
-                ${viewsDisplay}
+        `;
+    } else {
+        const words = card.revealed.words ? card.words.toLocaleString() : '???';
+        const views = card.revealed.views ? card.views.toLocaleString() : '???';
+        const links = card.revealed.links ? card.links : '???';
+        
+        cardEl.innerHTML = `
+            <div class="card-title">${card.title}</div>
+            <div class="card-stats">
+                <div class="stat-line"><span>Words:</span> <span>${words}</span></div>
+                <div class="stat-line"><span>Views:</span> <span>${views}</span></div>
+                <div class="stat-line"><span>Links:</span> <span>${links}</span></div>
             </div>
-            <div class="stat-line">
-                <span>Links:</span>
-                ${linksDisplay}
-            </div>
-        </div>
-    `;
-    
-    return card;
+        `;
+    }
+
+    return cardEl;
 }
+
 
 function dealCards() {
     // Only deal new player cards if they don't exist (first round or after game over)

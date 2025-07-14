@@ -410,6 +410,15 @@ body {
     margin: 1rem auto;
 }
 
+.card[data-perk="true"] {
+    font-style: italic;
+}
+
+.card[data-onetime="true"] {
+    border: 2px dashed #6a1b9a;
+}
+
+
 /* Add subtle Wikipedia-style table styling */
 .stat-line:nth-child(even) {
     background: rgba(248, 249, 250, 0.5);
