@@ -442,9 +442,10 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
     font-size: 0.75rem;
     white-space: nowrap;
-    z-index: 10000;
+    z-index: 999999;
     display: none;
     min-width: 160px;
+    pointer-events: none;
 }
 
 .card:hover .card-tooltip {
@@ -465,7 +466,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 40px;
     z-index: 1000;
     cursor: pointer;
     transition: all 0.3s ease;
