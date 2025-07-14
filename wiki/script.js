@@ -358,6 +358,7 @@ function getRandomArticles(count) {
     return shuffled.slice(0, count).map(article => article.clone());
 }
 
+// Fixed card creation with proper hover functionality
 function createCardElement(card, isPlayer = true) {
     const isPerk = card instanceof PerkCard;
     const cardEl = document.createElement('div');
@@ -368,37 +369,67 @@ function createCardElement(card, isPlayer = true) {
         cardEl.ondragstart = (e) => dragStart(e, card);
     }
 
+    // Create tooltip content
+    let tooltipContent = '';
+    if (isPerk) {
+        tooltipContent = `
+            <div><strong>Playable:</strong> ${card.playable ? 'Yes' : 'No'}</div>
+            <div><strong>One-Time:</strong> ${card.oneTime ? 'Yes' : 'No'}</div>
+            <div><strong>Effect:</strong> ${card.effect}</div>
+        `;
+    } else {
+        // For articles, show revealed stats or "???"
+        const wordsText = card.revealed.words ? card.words.toLocaleString() : '???';
+        const viewsText = card.revealed.views ? card.views.toLocaleString() : '???';
+        const linksText = card.revealed.links ? card.links.toString() : '???';
+        
+        tooltipContent = `
+            <div><strong>Words:</strong> ${wordsText}</div>
+            <div><strong>Views:</strong> ${viewsText}</div>
+            <div><strong>Links:</strong> ${linksText}</div>
+        `;
+    }
+
     cardEl.innerHTML = `
         <div class="card-title">${card.title}</div>
-        <div class="card-tooltip">
-            ${isPerk ? `
-                <div><strong>Playable:</strong> ${card.playable ? 'Yes' : 'No'}</div>
-                <div><strong>One-Time:</strong> ${card.oneTime ? 'Yes' : 'No'}</div>
-                <div><strong>Effect:</strong> ${card.effect}</div>
-            ` : `
-                <div><strong>Words:</strong> ${card.words.toLocaleString()}</div>
-                <div><strong>Views:</strong> ${card.views.toLocaleString()}</div>
-                <div><strong>Links:</strong> ${card.links}</div>
-            `}
-        </div>
+        <div class="card-tooltip">${tooltipContent}</div>
     `;
 
-    // Show tooltip on hover
-    cardEl.addEventListener('mouseenter', () => {
-        const tooltip = cardEl.querySelector('.card-tooltip');
-        tooltip.style.display = 'block';
-    });
-    cardEl.addEventListener('mouseleave', () => {
-        const tooltip = cardEl.querySelector('.card-tooltip');
-        tooltip.style.display = 'none';
+    // Add hover event listeners
+    cardEl.addEventListener('mouseenter', (e) => {
+        const tooltip = e.currentTarget.querySelector('.card-tooltip');
+        if (tooltip) {
+            tooltip.style.display = 'block';
+            tooltip.style.position = 'absolute';
+            tooltip.style.zIndex = '1000';
+            tooltip.style.background = 'rgba(0,0,0,0.9)';
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '8px';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.fontSize = '12px';
+            tooltip.style.minWidth = '150px';
+            tooltip.style.top = '100%';
+            tooltip.style.left = '50%';
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.style.marginTop = '5px';
+        }
     });
 
+    cardEl.addEventListener('mouseleave', (e) => {
+        const tooltip = e.currentTarget.querySelector('.card-tooltip');
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
+    });
+
+    // Style perk cards differently
     if (isPerk) {
-        cardEl.style.background = card.oneTime ? '#f3e5f5' : '#fff3e0';
+        cardEl.style.background = card.oneTime ? 'linear-gradient(135deg, #f3e5f5, #e1bee7)' : 'linear-gradient(135deg, #fff3e0, #ffcc02)';
+        cardEl.style.border = '2px solid #9c27b0';
     }
+
     return cardEl;
 }
-
 
 
 function dealCards() {
@@ -458,17 +489,15 @@ function dragStart(event, card) {
     event.target.classList.add('dragging');
 }
 
-
 function allowDrop(event) {
     event.preventDefault();
     event.target.classList.add('drag-over');
 }
-
 function drop(event, slotType) {
     event.preventDefault();
     event.target.classList.remove('drag-over');
 
-    // Retrieve drag data (fallback for plain text)
+    // Retrieve drag data
     let dragData;
     try {
         dragData = JSON.parse(event.dataTransfer.getData('text/plain'));
@@ -477,29 +506,29 @@ function drop(event, slotType) {
     }
     const cardTitle = dragData.title;
 
-    // Find the actual article object and its source (slot or hand)
-    let actualArticle = null;
+    // Find the actual card object and its source location
+    let actualCard = null;
     let sourceLocation = null;
 
     // Check if dragging from a slot
     for (const [slot, card] of Object.entries(gameState.playerSlots)) {
         if (card && card.title === cardTitle) {
-            actualArticle = card;
+            actualCard = card;
             sourceLocation = { type: 'slot', slot };
             break;
         }
     }
 
     // If not found in slots, check hand
-    if (!actualArticle) {
-        actualArticle = gameState.playerCards.find(card => card.title === cardTitle);
-        if (actualArticle) {
+    if (!actualCard) {
+        actualCard = gameState.playerCards.find(card => card.title === cardTitle);
+        if (actualCard) {
             sourceLocation = { type: 'hand' };
         }
     }
 
     // If still not found, abort
-    if (!actualArticle) return;
+    if (!actualCard) return;
 
     // If there's already a card in the drop slot, swap it back to source
     const existingCard = gameState.playerSlots[slotType];
@@ -507,12 +536,15 @@ function drop(event, slotType) {
         if (sourceLocation.type === 'slot') {
             gameState.playerSlots[sourceLocation.slot] = existingCard;
         } else {
-            gameState.playerCards.push(existingCard);
+            // Add back to hand if dragging from hand
+            if (!gameState.playerCards.find(c => c.title === existingCard.title)) {
+                gameState.playerCards.push(existingCard);
+            }
         }
     }
 
     // Place the dragged card into the new slot
-    gameState.playerSlots[slotType] = actualArticle;
+    gameState.playerSlots[slotType] = actualCard;
 
     // Remove from original location
     if (sourceLocation.type === 'slot') {
@@ -524,6 +556,7 @@ function drop(event, slotType) {
     // Refresh UI
     renderPlayerSlots();
     renderPlayerHand();
+    updateBattleButtonState();
 }
 
 
@@ -770,28 +803,53 @@ function restartGame() {
     showCurrentEvent();
 }
 
+// Update the updateCardVisuals function to use the new createCardElement
 function updateCardVisuals(updatedCard) {
     // Update card in player hand
-    const playerHand = document.getElementById('player-hand');
-    const handCards = playerHand.querySelectorAll('.card');
-    handCards.forEach(cardElement => {
-        if (cardElement.querySelector('.card-title').textContent === updatedCard.title) {
-            // Replace the card element with updated version
-            const newCardElement = createCardElement(updatedCard, true);
-            cardElement.parentNode.replaceChild(newCardElement, cardElement);
-        }
-    });
+    renderPlayerHand();
     
     // Update card in player slots
+    renderPlayerSlots();
+}
+
+// Add missing render functions
+function renderPlayerSlots() {
     ['words', 'views', 'links'].forEach(slot => {
-        const slotCard = gameState.playerSlots[slot];
-        if (slotCard && slotCard.title === updatedCard.title) {
-            const slotElement = document.getElementById(`player-${slot}`);
-            slotElement.innerHTML = '';
-            const newCardElement = createCardElement(updatedCard, true);
-            slotElement.appendChild(newCardElement);
+        const slotElement = document.getElementById(`player-${slot}`);
+        slotElement.innerHTML = '';
+        
+        const card = gameState.playerSlots[slot];
+        if (card) {
+            const cardElement = createCardElement(card, true);
+            slotElement.appendChild(cardElement);
         }
     });
+}
+
+function renderPlayerHand() {
+    const playerHand = document.getElementById('player-hand');
+    playerHand.innerHTML = '';
+    
+    // Only show cards that aren't in slots
+    gameState.playerCards.forEach(card => {
+        const inSlot = Object.values(gameState.playerSlots).some(slotCard => 
+            slotCard && slotCard.title === card.title
+        );
+        
+        if (!inSlot) {
+            const cardElement = createCardElement(card, true);
+            playerHand.appendChild(cardElement);
+        }
+    });
+}
+
+function updateBattleButtonState() {
+    const battleBtn = document.getElementById('battle-btn');
+    const allSlotsFilled = Object.values(gameState.playerSlots).every(slot => slot !== null);
+    
+    if (battleBtn) {
+        battleBtn.disabled = !allSlotsFilled || gameState.battleInProgress;
+    }
 }
 
 function autoWin() {
@@ -826,7 +884,7 @@ function autoWin() {
 }
 
 
-// Handle drag events
+// Fixed drag event handlers
 document.addEventListener('dragend', (e) => {
     e.target.classList.remove('dragging');
 });
@@ -843,3 +901,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateMapDisplay();
     showCurrentEvent();
 });
+
