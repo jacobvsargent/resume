@@ -1,4 +1,6 @@
 // Firebase configuration (config.js)
+// ✅ Firebase Security Rules are now protecting your database
+// The API key can be public for client-side Firebase apps when rules are properly configured
 const firebaseConfig = {
     apiKey: "AIzaSyDcuGP9MQDjKLcLjHR2TI8TrKRiG31nHF4",
     authDomain: "common-sense-28b23.firebaseapp.com",

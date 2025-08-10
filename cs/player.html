@@ -19,16 +19,24 @@
     </a>
     </header>
     
-    <div id="join-screen">
-      <h2>Join a Game</h2>
+    <div id="join-screen" role="main" aria-labelledby="join-title">
+      <h2 id="join-title">Join a Game</h2>
       <div class="form-group">
-        <input type="text" id="name-input" placeholder="Your Name" maxlength="15">
+        <label for="name-input" class="visually-hidden">Your Name</label>
+        <input type="text" id="name-input" placeholder="Your Name" maxlength="15" 
+               aria-label="Enter your name" required>
       </div>
       <div class="form-group">
-        <input type="text" id="room-input" placeholder="Room Code" maxlength="4">
+        <label for="room-input" class="visually-hidden">Room Code</label>
+        <input type="text" id="room-input" placeholder="Room Code" maxlength="4" 
+               aria-label="Enter 4-letter room code" required>
       </div>
-      <button id="join-game" class="btn-primary">Join Game</button>
-      <p id="join-error" class="error hidden"></p>
+      <button id="join-game" class="btn-primary" aria-describedby="join-error">Join Game</button>
+      <div id="join-loading" class="loading hidden" role="status" aria-live="polite">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <p>Joining game...</p>
+      </div>
+      <p id="join-error" class="error hidden" role="alert" aria-live="assertive"></p>
     </div>
 
     <div id="waiting-screen" class="hidden">

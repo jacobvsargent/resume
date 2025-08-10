@@ -1,46 +1,45 @@
-// Function to parse CSV text
+// Simplified CSV parser with better performance
 function parseCSV(text) {
-  const lines = text.split('\n');
-  const headers = lines[0].split(',').map(header => header.trim().replace(/^"(.*)"$/, '$1'));
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
   
+  // Parse headers
+  const headers = lines[0].split(',').map(header => header.trim().replace(/^"|"$/g, ''));
   const records = [];
+  
+  // Parse data rows
   for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue; // Skip empty lines
+    const line = lines[i].trim();
+    if (!line) continue;
     
-    // Handle values that might contain commas within quotes
-    const row = {};
-    let currentPosition = 0;
-    let valueStart = 0;
-    let insideQuotes = false;
+    // Simple CSV parsing - handles quoted values with commas
+    const values = [];
+    let current = '';
+    let inQuotes = false;
     
-    headers.forEach(header => {
-      // Find next value
-      while (currentPosition < lines[i].length) {
-        if (lines[i][currentPosition] === '"') {
-          insideQuotes = !insideQuotes;
-        } else if (lines[i][currentPosition] === ',' && !insideQuotes) {
-          // Found end of value
-          let value = lines[i].substring(valueStart, currentPosition).trim();
-          // Remove surrounding quotes if present
-          value = value.replace(/^"(.*)"$/, '$1');
-          row[header] = value;
-          
-          valueStart = currentPosition + 1;
-          currentPosition++;
-          break;
-        }
-        currentPosition++;
-      }
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
       
-      // If we reached the end of the line
-      if (currentPosition >= lines[i].length) {
-        let value = lines[i].substring(valueStart).trim();
-        value = value.replace(/^"(.*)"$/, '$1');
-        row[header] = value;
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
       }
+    }
+    values.push(current.trim().replace(/^"|"$/g, ''));
+    
+    // Create row object
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
     });
     
-    records.push(row);
+    if (row.text && row.deck && row.count) { // Validate required fields
+      records.push(row);
+    }
   }
   
   return records;
@@ -161,19 +160,16 @@ async function initializeGame() {
         loadedData.objects.length > 0) {
       commonSenseData = loadedData;
       console.log('Common sense data loaded successfully from CSV');
-      logImportedData();
     } else {
       console.warn('CSV data was empty or invalid, using fallback data');
     }
     
     dataLoaded = true;
     
-    // Now that data is loaded, you can safely start the game
-    startNewRound(); // Call your startNewRound function here
+    // Don't automatically start a round - let the host control this
   } catch (error) {
     console.error('Failed to load common sense data:', error);
     dataLoaded = true; // Set to true anyway as we have fallback data
-    startNewRound(); // Use fallback data
   }
 }
 
@@ -215,34 +211,14 @@ function weightedRandom(items) {
   return items[0]; // Fallback
 }
 
+// Utility function for debugging data (only use in development)
 function logImportedData() {
-  console.log("=== IMPORTED COMMON SENSE DATA ===");
-  console.log("Categories:", commonSenseData.categories);
-  console.log("Modifiers:", commonSenseData.modifiers);
-  console.log("Objects:", commonSenseData.objects);
-  
-  // Log the total count of items in each category
-  console.log("Total categories:", commonSenseData.categories.length);
-  console.log("Total modifiers:", commonSenseData.modifiers.length);
-  console.log("Total objects:", commonSenseData.objects.length);
-  
-  // Detailed logging of each item
-  console.log("\n=== DETAILED DATA ===");
-  
-  console.log("\nCATEGORIES:");
-  commonSenseData.categories.forEach((item, index) => {
-    console.log(`  ${index + 1}. "${item.text}" (deck: ${item.deck}, count: ${item.count})`);
-  });
-  
-  console.log("\nMODIFIERS:");
-  commonSenseData.modifiers.forEach((item, index) => {
-    console.log(`  ${index + 1}. "${item.text}" (deck: ${item.deck}, count: ${item.count})`);
-  });
-  
-  console.log("\nOBJECTS:");
-  commonSenseData.objects.forEach((item, index) => {
-    console.log(`  ${index + 1}. "${item.text}" (deck: ${item.deck}, count: ${item.count})`);
-  });
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log("=== IMPORTED COMMON SENSE DATA ===");
+    console.log("Categories:", commonSenseData.categories.length);
+    console.log("Modifiers:", commonSenseData.modifiers.length);
+    console.log("Objects:", commonSenseData.objects.length);
+  }
 }
 
 // Safe version of startNewRound that checks data is loaded

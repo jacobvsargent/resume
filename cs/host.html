@@ -24,29 +24,31 @@
         <div class="setting-group">
           <label for="rounds-slider">Total Rounds:</label>
           <div class="slider-container">
-            <input type="range" id="rounds-slider" min="0" max="5" value="2" class="slider">
-            <span id="rounds-value" class="slider-value">5</span>
+            <input type="range" id="rounds-slider" min="0" max="5" value="2" class="slider" 
+                   aria-label="Select number of rounds" role="slider" aria-valuemin="0" aria-valuemax="5">
+            <span id="rounds-value" class="slider-value" aria-live="polite"></span>
           </div>
         </div>
         <div class="setting-group">
           <label for="difficulty-slider">Difficulty:</label>
           <div class="slider-container">
-            <input type="range" id="difficulty-slider" min="0" max="2" value="1" class="slider">
-            <span id="difficulty-value" class="slider-value">Medium</span>
+            <input type="range" id="difficulty-slider" min="0" max="2" value="1" class="slider"
+                   aria-label="Select difficulty level" role="slider" aria-valuemin="0" aria-valuemax="2">
+            <span id="difficulty-value" class="slider-value" aria-live="polite">Medium</span>
           </div>
-          <div id="difficulty-explainer" class="difficulty-explainer"></div>
+          <div id="difficulty-explainer" class="difficulty-explainer" aria-live="polite"></div>
         </div>
       </div>
-      <button id="create-game" class="btn-primary">Create New Game</button>
-      <div id="room-display" class="hidden">
-        <h3>Room Code: <span id="room-code" class="highlight"></span></h3>
-        <p>Players: <span id="player-count">0</span></p>
-        <div id="player-list"></div>
-        <div id="game-info">
+      <button id="create-game" class="btn-primary" aria-describedby="game-settings">Create New Game</button>
+      <div id="room-display" class="hidden" role="region" aria-labelledby="room-status">
+        <h3 id="room-status">Room Code: <span id="room-code" class="highlight" aria-label="Room code"></span></h3>
+        <p>Players: <span id="player-count" aria-label="Number of players">0</span></p>
+        <div id="player-list" role="list" aria-label="Players in this game"></div>
+        <div id="game-info" aria-label="Game settings">
           <p>Rounds: <span id="display-rounds" class="highlight"></span></p>
           <p>Difficulty: <span id="display-difficulty" class="highlight"></span></p>
         </div>
-        <button id="start-game" class="btn-primary disabled" disabled>Start Game</button>
+        <button id="start-game" class="btn-primary disabled" disabled aria-describedby="player-count">Start Game</button>
       </div>
     </div>
 

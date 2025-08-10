@@ -1,0 +1,109 @@
+{
+  "rules": {
+    "games": {
+      "$gameId": {
+        // Allow read/write to games, but with validation
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['status', 'created']) && $gameId.matches(/^[A-Z]{4}$/)",
+        
+        // Game status validation
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'waiting' || newData.val() === 'active' || newData.val() === 'ended')"
+        },
+        
+        // Players validation
+        "players": {
+          "$playerId": {
+            ".validate": "newData.hasChildren(['name', 'joinedAt'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 15 && newData.val().matches(/^[a-zA-Z0-9\\s\\-_]+$/)"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber() || newData.val() === '.sv' || newData.hasChild('timestamp')"
+            }
+          }
+        },
+        
+        // Player answers validation
+        "playerAnswers": {
+          "$playerId": {
+            ".validate": "newData.exists()",
+            "$sense": {
+              ".validate": "newData.isString() && newData.val().length <= 50"
+            }
+          }
+        },
+        
+        // Player scores validation
+        "playerScores": {
+          "$playerId": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        },
+        
+        // Current round validation
+        "currentRound": {
+          ".validate": "newData.hasChildren(['question', 'senses', 'timestamp'])",
+          "question": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "senses": {
+            ".validate": "newData.hasChildren()",
+            "$index": {
+              ".validate": "newData.isString() && (newData.val() === 'Color' || newData.val() === 'Texture' || newData.val() === 'Taste' || newData.val() === 'Smell' || newData.val() === 'Volume')"
+            }
+          }
+        },
+        
+        // Game settings validation
+        "totalRounds": {
+          ".validate": "newData.isNumber() || newData.val() === 'Infinite'"
+        },
+        "difficulty": {
+          ".validate": "newData.isString() && (newData.val() === 'Easy' || newData.val() === 'Medium' || newData.val() === 'Hard')"
+        },
+        "currentRoundNumber": {
+          ".validate": "newData.isNumber() && newData.val() >= 1"
+        },
+        
+        // Player ready status
+        "playerReadyForNext": {
+          "$playerId": {
+            ".validate": "newData.isBoolean()"
+          }
+        },
+        
+        // Round result validation
+        "roundResult": {
+          ".validate": "newData.hasChildren(['consensusStatus', 'totalPointsEarned', 'maxPossiblePoints'])",
+          "consensusStatus": {
+            ".validate": "newData.isString() && (newData.val() === 'common' || newData.val() === 'partial' || newData.val() === 'nonsensical')"
+          },
+          "totalPointsEarned": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "maxPossiblePoints": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          }
+        },
+        
+        // Created timestamp
+        "created": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        // Deny any other fields
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    
+    // Deny access to any other top-level nodes
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

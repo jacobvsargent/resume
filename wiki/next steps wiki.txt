@@ -1,13 +1,9 @@
-FIXES
-- looks like cards reset after each round
-- stat reveal may or may not work?
-- move the Battle thing into the top bars
-- 
-
-FEATURES
+NOW
+- rerender hand upon selling in special event
+- implement shop
 - implement wikiapi
-- items (one time and permanent)
+- make items work
+
+LATER
 - replace Links with Instances of a specific word the articles share in common
-- console.logging
-- game over should reveal all stats methinks
-- how does the player get better cards? shop/random event/steal from opponent?
+- make toolkits work one day

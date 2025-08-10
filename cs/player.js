@@ -20,6 +20,7 @@ const playerResultHeader = document.getElementById('player-result-header');
 const playerResults = document.getElementById('player-results');
 const nextRoundBtn = document.getElementById('next-round-btn');
 const waitingForPlayers = document.getElementById('waiting-for-players');
+const joinLoading = document.getElementById('join-loading');
 
 // Game setting display elements
 const gameSettingsDisplay = document.getElementById('game-settings-display');
@@ -36,24 +37,66 @@ let playerData = null;
 let currentRound = null;
 let gameSettings = {};
 
+// Firebase listener cleanup
+let firebaseListeners = [];
+
 // Event listeners
 joinGameBtn.addEventListener('click', joinGame);
 submitAnswer.addEventListener('click', submitPlayerAnswer);
 nextRoundBtn.addEventListener('click', readyForNextRound);
 
+// Input validation and sanitization
+function sanitizeInput(input) {
+  return input.replace(/[<>\"'&]/g, '').trim();
+}
+
+function validatePlayerName(name) {
+  if (!name || name.length === 0) {
+    return 'Please enter your name';
+  }
+  if (name.length > 15) {
+    return 'Name must be 15 characters or less';
+  }
+  if (!/^[a-zA-Z0-9\s\-_]+$/.test(name)) {
+    return 'Name can only contain letters, numbers, spaces, hyphens, and underscores';
+  }
+  return null;
+}
+
+function validateRoomCode(code) {
+  if (!code || code.length !== 4) {
+    return 'Please enter a valid 4-letter room code';
+  }
+  if (!/^[A-Z]{4}$/.test(code)) {
+    return 'Room code must be 4 uppercase letters';
+  }
+  return null;
+}
+
 function joinGame() {
-  const name = nameInput.value.trim();
-  const roomCode = roomInput.value.trim().toUpperCase();
+  const rawName = nameInput.value.trim();
+  const rawRoomCode = roomInput.value.trim().toUpperCase();
   
-  if (!name) {
-    showJoinError('Please enter your name');
+  // Validate and sanitize inputs
+  const nameError = validatePlayerName(rawName);
+  if (nameError) {
+    showJoinError(nameError);
     return;
   }
   
-  if (!roomCode || roomCode.length !== 4) {
-    showJoinError('Please enter a valid room code');
+  const roomCodeError = validateRoomCode(rawRoomCode);
+  if (roomCodeError) {
+    showJoinError(roomCodeError);
     return;
   }
+  
+  const name = sanitizeInput(rawName);
+  const roomCode = sanitizeInput(rawRoomCode);
+  
+  // Show loading state
+  joinLoading.classList.remove('hidden');
+  joinGameBtn.disabled = true;
+  joinError.classList.add('hidden');
   
   // Check if game exists
   db.ref(`games/${roomCode}`).once('value')
@@ -83,6 +126,9 @@ function joinGame() {
     })
     .then(() => {
       if (gameId) {
+        // Hide loading state
+        hideJoinLoading();
+        
         // Set up game listeners
         setupGameListeners();
         
@@ -272,7 +318,7 @@ function submitPlayerAnswer() {
   });
   
   if (!allAnswered) {
-    alert('Please answer all questions');
+    showJoinError('Please answer all questions');
     return;
   }
   
@@ -284,7 +330,7 @@ function submitPlayerAnswer() {
       answerSubmitted.classList.remove('hidden');
     })
     .catch((error) => {
-      alert('Error submitting answer');
+      showJoinError('Error submitting answer');
       console.error(error);
     });
 }
@@ -302,7 +348,7 @@ function readyForNextRound() {
     })
     .catch((error) => {
       console.error('Error marking player ready:', error);
-      alert('Error preparing for next round');
+      showJoinError('Error preparing for next round');
     });
 }
 
@@ -450,6 +496,10 @@ function showGameEnd(playerScores, allPlayers) {
 
 // Helper functions
 function showJoinError(message) {
+  // Hide loading state
+  joinLoading.classList.add('hidden');
+  joinGameBtn.disabled = false;
+  
   joinError.textContent = message;
   joinError.classList.remove('hidden');
   
@@ -458,7 +508,23 @@ function showJoinError(message) {
   }, 3000);
 }
 
+function hideJoinLoading() {
+  joinLoading.classList.add('hidden');
+  joinGameBtn.disabled = false;
+}
+
+// Cleanup Firebase listeners
+function cleanupFirebaseListeners() {
+  firebaseListeners.forEach(({ ref, callback }) => {
+    ref.off('value', callback);
+  });
+  firebaseListeners = [];
+}
+
 // Auto-capitalization for room code
 roomInput.addEventListener('input', function() {
   this.value = this.value.toUpperCase();
 });
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', cleanupFirebaseListeners);

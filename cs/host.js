@@ -10,6 +10,9 @@ let totalRounds = 5;
 let difficulty = 'Medium';
 let playerReadyForNext = {}; // Track who is ready for next round
 
+// Firebase listener cleanup
+let firebaseListeners = [];
+
 // DOM Elements
 const createGameBtn = document.getElementById('create-game');
 const roomDisplay = document.getElementById('room-display');
@@ -51,13 +54,21 @@ const difficultyOptions = ['Easy', 'Medium', 'Hard'];
 roundsSlider.addEventListener('input', function() {
   const value = roundsOptions[parseInt(this.value)];
   roundsValue.textContent = value;
-  totalRounds = value;
+  totalRounds = (value === 'Infinite') ? 'Infinite' : parseInt(value);
+  
+  // Update ARIA attributes for accessibility
+  this.setAttribute('aria-valuenow', this.value);
+  this.setAttribute('aria-valuetext', value);
 });
 
 difficultySlider.addEventListener('input', function() {
   const value = difficultyOptions[parseInt(this.value)];
   difficultyValue.textContent = value;
   difficulty = value;
+
+  // Update ARIA attributes for accessibility
+  this.setAttribute('aria-valuenow', this.value);
+  this.setAttribute('aria-valuetext', value);
 
   // Update difficulty explainer
   switch (value) {
@@ -75,10 +86,19 @@ difficultySlider.addEventListener('input', function() {
 });
 
 // Initialize slider values
-roundsValue.textContent = roundsOptions[parseInt(roundsSlider.value)];
-difficultyValue.textContent = difficultyOptions[parseInt(difficultySlider.value)];
-totalRounds = roundsOptions[parseInt(roundsSlider.value)];
-difficulty = difficultyOptions[parseInt(difficultySlider.value)];
+const initialRounds = roundsOptions[parseInt(roundsSlider.value)];
+const initialDifficulty = difficultyOptions[parseInt(difficultySlider.value)];
+
+roundsValue.textContent = initialRounds;
+difficultyValue.textContent = initialDifficulty;
+totalRounds = (initialRounds === 'Infinite') ? 'Infinite' : parseInt(initialRounds);
+difficulty = initialDifficulty;
+
+// Set initial ARIA attributes
+roundsSlider.setAttribute('aria-valuenow', roundsSlider.value);
+roundsSlider.setAttribute('aria-valuetext', initialRounds);
+difficultySlider.setAttribute('aria-valuenow', difficultySlider.value);
+difficultySlider.setAttribute('aria-valuetext', initialDifficulty);
 
 // Create a new game
 createGameBtn.addEventListener('click', createGame);
@@ -111,7 +131,7 @@ function createGame() {
 
     
     // Listen for player joins
-    gameRef.child('players').on('value', (snapshot) => {
+    const playersListener = gameRef.child('players').on('value', (snapshot) => {
       players = snapshot.val() || {};
       updatePlayerList();
 
@@ -132,9 +152,10 @@ function createGame() {
         commonSenseData.objects.push(...newObjects);
       }
     });
+    firebaseListeners.push({ ref: gameRef.child('players'), callback: playersListener });
     
     // Listen for game status changes
-    gameRef.child('status').on('value', (snapshot) => {
+    const statusListener = gameRef.child('status').on('value', (snapshot) => {
       const status = snapshot.val();
       
       if (status === 'active') {
@@ -146,17 +167,23 @@ function createGame() {
         resultsDisplay.classList.add('hidden');
       }
     });
+    firebaseListeners.push({ ref: gameRef.child('status'), callback: statusListener });
     
     // Listen for player answers
     gameRef.child('playerAnswers').on('value', (snapshot) => {
       playerAnswers = snapshot.val() || {};
       updatePlayerStatus();
       
-      // Check if all players have answered
-      if (Object.keys(playerAnswers).length === Object.keys(players).length &&
-          Object.keys(players).length > 0) {
+      // Check if all active players have answered
+      const activePlayers = Object.keys(players).length;
+      const answeredPlayers = Object.keys(playerAnswers).length;
+      
+      if (activePlayers > 0 && answeredPlayers === activePlayers && answeredPlayers >= 2) {
         // Show results after a short delay
         setTimeout(showResults, 1000);
+      } else if (activePlayers < 2) {
+        // Handle case where too few players remain
+        showError('Not enough players remaining to continue the game.');
       }
     });
     
@@ -205,7 +232,7 @@ startGameBtn.addEventListener('click', startGame);
 
 function startGame() {
   if (Object.keys(players).length < 2) {
-    alert('You need at least 2 players to start the game!');
+    showError('You need at least 2 players to start the game!');
     return;
   }
 
@@ -220,18 +247,12 @@ function startGame() {
   db.ref(`games/${gameId}/playerScores`).set(initialScores)
     .then(() => {
       playerScores = initialScores;
-      // Set game status to active
-      return db.ref(`games/${gameId}/status`).set('active');
-    })
-
-    .then(() => {
-      playerScores = initialScores;
-
+      
       // DEBUG: Log all available objects before starting
       if (commonSenseData && Array.isArray(commonSenseData.objects)) {
         console.log("Available question objects before game start:");
         commonSenseData.objects.forEach(obj => {
-          console.log(obj); // Each obj is like ["BANANA?", "3 - Object", "5"]
+          console.log(obj);
         });
       } else {
         console.warn("commonSenseData.objects is not available or malformed");
@@ -240,7 +261,6 @@ function startGame() {
       // Set game status to active
       return db.ref(`games/${gameId}/status`).set('active');
     })
-
     .then(() => startNewRound());
 }
 
@@ -327,12 +347,19 @@ function getFilteredModifier() {
 
 // Calculate which players get points for this round
 function calculateRoundPoints() {
+  if (!currentRound || !currentRound.senses || !Array.isArray(currentRound.senses)) {
+    console.warn('Invalid currentRound data');
+    return {};
+  }
+  
   const senses = currentRound.senses;
   const pointsThisRound = {};
   
-  // Initialize points for this round
-  Object.keys(players).forEach(playerId => {
-    pointsThisRound[playerId] = 0;
+  // Initialize points for this round - only for players with answers
+  Object.keys(playerAnswers).forEach(playerId => {
+    if (players[playerId]) { // Ensure player still exists
+      pointsThisRound[playerId] = 0;
+    }
   });
   
   // For each sense, check who matches with whom
@@ -340,13 +367,17 @@ function calculateRoundPoints() {
     // Map of answers to player IDs who gave that answer
     const answerMap = {};
     
-    // Build the answer map
+    // Build the answer map - only for valid players
     Object.keys(playerAnswers).forEach(playerId => {
+      if (!players[playerId] || !playerAnswers[playerId]) return; // Skip disconnected players
+      
       const answer = playerAnswers[playerId][sense];
-      if (!answerMap[answer]) {
-        answerMap[answer] = [];
+      if (answer && answer.trim()) { // Only count non-empty answers
+        if (!answerMap[answer]) {
+          answerMap[answer] = [];
+        }
+        answerMap[answer].push(playerId);
       }
-      answerMap[answer].push(playerId);
     });
     
     // Award points based on number of players who gave the same answer
@@ -354,22 +385,28 @@ function calculateRoundPoints() {
       if (playerIds.length > 1) {
         // Each player gets points equal to total number of matching players
         playerIds.forEach(playerId => {
-          pointsThisRound[playerId] += playerIds.length;
+          if (pointsThisRound[playerId] !== undefined) {
+            pointsThisRound[playerId] += playerIds.length;
+          }
         });
       }
     });
   });
   
-  // Update total scores
+  // Update total scores safely
   Object.keys(pointsThisRound).forEach(playerId => {
-    if (!playerScores[playerId]) {
-      playerScores[playerId] = 0;
+    if (players[playerId]) { // Only update scores for existing players
+      if (!playerScores[playerId]) {
+        playerScores[playerId] = 0;
+      }
+      playerScores[playerId] += pointsThisRound[playerId];
     }
-    playerScores[playerId] += pointsThisRound[playerId];
   });
   
   // Save updated scores to Firebase
-  db.ref(`games/${gameId}/playerScores`).set(playerScores);
+  if (gameId) {
+    db.ref(`games/${gameId}/playerScores`).set(playerScores);
+  }
   
   return pointsThisRound;
 }
@@ -457,34 +494,46 @@ function showFinalResultsButton() {
   finalResultsBtn.addEventListener('click', showGameEnd);
 }
 
-// Update the integrated leaderboard
+// Update the integrated leaderboard with optimized DOM manipulation
 function updateIntegratedLeaderboard(roundPoints) {
   // Sort players by score (highest first)
   const sortedPlayers = Object.keys(playerScores).sort((a, b) => {
     return playerScores[b] - playerScores[a];
   });
   
-  let leaderboardHTML = `
-    <h3>Round Results & Leaderboard</h3>
-    <div class="round-question">"${currentRound.question}"</div>
-    <table class="leaderboard-table">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Player</th>
-          <th>Total Score</th>
-          <th>This Round</th>`;
+  // Create document fragment for better performance
+  const fragment = document.createDocumentFragment();
   
-  // Add column headers for each sense
-  currentRound.senses.forEach(sense => {
-    leaderboardHTML += `<th>${sense}</th>`;
+  // Create header
+  const header = document.createElement('h3');
+  header.textContent = 'Round Results & Leaderboard';
+  fragment.appendChild(header);
+  
+  const roundQuestion = document.createElement('div');
+  roundQuestion.className = 'round-question';
+  roundQuestion.textContent = `"${currentRound.question}"`;
+  fragment.appendChild(roundQuestion);
+  
+  // Create table
+  const table = document.createElement('table');
+  table.className = 'leaderboard-table';
+  
+  // Create table header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  
+  const headers = ['Rank', 'Player', 'Total Score', 'This Round', ...currentRound.senses];
+  headers.forEach(headerText => {
+    const th = document.createElement('th');
+    th.textContent = headerText;
+    headerRow.appendChild(th);
   });
   
-  leaderboardHTML += `
-        </tr>
-      </thead>
-      <tbody>
-  `;
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+  
+  // Create table body
+  const tbody = document.createElement('tbody');
   
   sortedPlayers.forEach((playerId, index) => {
     const playerName = players[playerId] ? players[playerId].name : 'Unknown';
@@ -492,32 +541,50 @@ function updateIntegratedLeaderboard(roundPoints) {
     const pointsEarned = roundPoints[playerId] || 0;
     const rank = index + 1;
     
-    // Add classes for top 3 positions
-    let rankClass = '';
-    if (rank === 1) rankClass = 'first-place';
-    else if (rank === 2) rankClass = 'second-place';
-    else if (rank === 3) rankClass = 'third-place';
+    const row = document.createElement('tr');
     
-    leaderboardHTML += `
-      <tr class="${rankClass}">
-        <td>${rank}</td>
-        <td>${playerName}</td>
-        <td>${playerScore}</td>
-        <td class="${pointsEarned > 0 ? 'points-earned' : ''}">${pointsEarned > 0 ? '+' + pointsEarned : '0'}</td>`;
+    // Add ranking class
+    if (rank === 1) row.className = 'first-place';
+    else if (rank === 2) row.className = 'second-place';
+    else if (rank === 3) row.className = 'third-place';
     
-    // Add player answers for each sense
+    // Create cells
+    const cells = [
+      rank,
+      playerName,
+      playerScore,
+      pointsEarned > 0 ? `+${pointsEarned}` : '0'
+    ];
+    
+    cells.forEach((cellText, cellIndex) => {
+      const td = document.createElement('td');
+      td.textContent = cellText;
+      if (cellIndex === 3 && pointsEarned > 0) {
+        td.className = 'points-earned';
+      }
+      row.appendChild(td);
+    });
+    
+    // Add player answers
     currentRound.senses.forEach(sense => {
+      const td = document.createElement('td');
+      td.className = 'player-answer';
       const playerAnswer = playerAnswers[playerId] && playerAnswers[playerId][sense] 
         ? playerAnswers[playerId][sense] 
         : "-";
-      leaderboardHTML += `<td class="player-answer">${playerAnswer}</td>`;
+      td.textContent = playerAnswer;
+      row.appendChild(td);
     });
     
-    leaderboardHTML += `</tr>`;
+    tbody.appendChild(row);
   });
   
-  leaderboardHTML += '</tbody></table>';
-  leaderboardElement.innerHTML = leaderboardHTML;
+  table.appendChild(tbody);
+  fragment.appendChild(table);
+  
+  // Replace content efficiently
+  leaderboardElement.innerHTML = '';
+  leaderboardElement.appendChild(fragment);
 }
 
 // Update next round status
@@ -553,14 +620,12 @@ function showGameEnd() {
   
   // Hide round counter and current question elements
   const roundCounter = document.querySelector('.game-info-bubble, #game-info-bubble');
-  console.log('roundCounter:', roundCounter);  // Is it null?
   if (roundCounter) {
     roundCounter.classList.add('hidden');
   }
   
   // Forcefully hide the question display block
   const questionDisplay = document.querySelector('.question-display, #question-display');
-  console.log('questionDisplay:', questionDisplay);  // Is it null?
   if (questionDisplay) {
     questionDisplay.classList.add('hidden');
     questionDisplay.style.display = 'none'; // Double-enforce hiding
@@ -608,10 +673,24 @@ function showGameEnd() {
   
   finalHTML += '</tbody></table>';
   finalLeaderboardElement.innerHTML = finalHTML;
-
-  // Create a new game
-  newGameBtn.addEventListener('click', createGame);
 }
+
+// Cleanup Firebase listeners
+function cleanupFirebaseListeners() {
+  firebaseListeners.forEach(({ ref, callback }) => {
+    ref.off('value', callback);
+  });
+  firebaseListeners = [];
+}
+
+// Add event listener once when page loads
+newGameBtn.addEventListener('click', () => {
+  cleanupFirebaseListeners(); // Clean up previous listeners
+  createGame();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', cleanupFirebaseListeners);
 
 // Helper Functions
 function generateRoomCode() {
@@ -625,6 +704,57 @@ function generateRoomCode() {
   return result;
 }
 
+// Standardized error handling
+function showError(message, isTemporary = true) {
+  // Create or get error display element
+  let errorElement = document.getElementById('host-error-display');
+  if (!errorElement) {
+    errorElement = document.createElement('div');
+    errorElement.id = 'host-error-display';
+    errorElement.className = 'error-message';
+    errorElement.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #e74c3c;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      max-width: 300px;
+    `;
+    document.body.appendChild(errorElement);
+  }
+  
+  errorElement.textContent = message;
+  errorElement.classList.remove('hidden');
+  
+  if (isTemporary) {
+    setTimeout(() => {
+      errorElement.classList.add('hidden');
+    }, 5000);
+  }
+}
+
+function hideError() {
+  const errorElement = document.getElementById('host-error-display');
+  if (errorElement) {
+    errorElement.classList.add('hidden');
+  }
+}
+
+// Input validation and sanitization
+function sanitizeInput(input) {
+  return input.replace(/[<>\"'&]/g, '').trim();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 function updatePlayerList() {
   playerCountElement.textContent = Object.keys(players).length;
   playerListElement.innerHTML = '';
@@ -632,7 +762,7 @@ function updatePlayerList() {
   for (const playerId in players) {
     const playerElement = document.createElement('div');
     playerElement.className = 'player-item';
-    playerElement.textContent = players[playerId].name;
+    playerElement.textContent = sanitizeInput(players[playerId].name || 'Unknown');
     playerListElement.appendChild(playerElement);
   }
   
