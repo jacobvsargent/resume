@@ -110,3 +110,4 @@ firebase database:rules:test --project your-project-id
 
 ---
 **Remember**: Never deploy to production without implementing proper security measures!
+

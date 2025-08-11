@@ -59,12 +59,56 @@
     }
     
     .instructions {
-      background-color: #fff;
+      background-color: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       margin-top: 40px;
       text-align: left;
+    }
+    
+    @media (max-width: 768px) {
+      .landing h1 {
+        font-size: 2.8rem;
+      }
+      
+      .landing p {
+        font-size: 1.1rem;
+      }
+      
+      .button-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+      
+      .instructions {
+        padding: 25px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .landing {
+        padding: 15px;
+      }
+      
+      .landing h1 {
+        font-size: 2.2rem;
+      }
+      
+      .landing p {
+        font-size: 1rem;
+      }
+      
+      .landing-btn {
+        width: 100%;
+        max-width: 280px;
+      }
+      
+      .instructions {
+        padding: 20px;
+      }
     }
     
     .instructions h2 {
@@ -92,6 +136,7 @@
     <div class="button-container">
       <a href="host.html" class="landing-btn host-btn">Host a Game</a>
       <a href="player.html" class="landing-btn player-btn">Join a Game</a>
+      <a href="stats.html" class="landing-btn" style="background-color: #9b59b6; color: white;">📊 View Stats</a>
     </div>
     
     <div class="instructions">
