@@ -2,81 +2,89 @@
   "rules": {
     "games": {
       "$gameId": {
-        // Allow read/write to games, but with validation
-        ".read": true,
-        ".write": true,
-        ".validate": "newData.hasChildren(['status', 'created']) && $gameId.matches(/^[A-Z]{4}$/)",
+        // Only allow read/write if game ID matches pattern and has required fields
+        ".read": "$gameId.matches(/^[A-Z]{4}$/) && data.exists()",
+        ".write": "$gameId.matches(/^[A-Z]{4}$/) && (newData.exists() === false || newData.hasChildren(['status', 'created']))",
+        ".validate": "newData.hasChildren(['status', 'created']) && newData.child('created').isNumber()",
         
-        // Game status validation
+        // Restrict game status changes
         "status": {
           ".validate": "newData.isString() && (newData.val() === 'waiting' || newData.val() === 'active' || newData.val() === 'ended')"
         },
         
-        // Players validation
+        // Player validation with strict limits
         "players": {
           "$playerId": {
             ".validate": "newData.hasChildren(['name', 'joinedAt'])",
+            ".write": "!data.exists() || data.child('name').val() === newData.child('name').val()",
             "name": {
-              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 15 && newData.val().matches(/^[a-zA-Z0-9\\s\\-_]+$/)"
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 15 && newData.val().matches(/^[a-zA-Z0-9\\s\\-_]+$/) && !newData.val().toLowerCase().matches(/(admin|system|null|undefined|function|script|eval|constructor|prototype)/)"
             },
             "joinedAt": {
-              ".validate": "newData.isNumber() || newData.val() === '.sv' || newData.hasChild('timestamp')"
-            }
+              ".validate": "newData.isNumber() && newData.val() <= now"
+            },
+            "$other": { ".validate": false }
           }
         },
         
-        // Player answers validation
+        // Restrict player answers to game participants only
         "playerAnswers": {
           "$playerId": {
+            ".write": "root.child('games').child($gameId).child('players').hasChild($playerId)",
             ".validate": "newData.exists()",
             "$sense": {
-              ".validate": "newData.isString() && newData.val().length <= 50"
+              ".validate": "newData.isString() && newData.val().length <= 50 && newData.val().length >= 1"
             }
           }
         },
         
-        // Player scores validation
+        // Scores can only be positive numbers with reasonable limits
         "playerScores": {
           "$playerId": {
-            ".validate": "newData.isNumber() && newData.val() >= 0"
+            ".write": "root.child('games').child($gameId).child('players').hasChild($playerId)",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
           }
         },
         
-        // Current round validation
+        // Current round structure validation
         "currentRound": {
           ".validate": "newData.hasChildren(['question', 'senses', 'timestamp'])",
           "question": {
-            ".validate": "newData.isString() && newData.val().length <= 200"
+            ".validate": "newData.isString() && newData.val().length <= 200 && newData.val().length >= 5"
           },
           "senses": {
-            ".validate": "newData.hasChildren()",
+            ".validate": "newData.hasChildren() && newData.numChildren() <= 3",
             "$index": {
               ".validate": "newData.isString() && (newData.val() === 'Color' || newData.val() === 'Texture' || newData.val() === 'Taste' || newData.val() === 'Smell' || newData.val() === 'Volume')"
             }
+          },
+          "timestamp": {
+            ".validate": "newData.isNumber() && newData.val() <= now"
           }
         },
         
-        // Game settings validation
+        // Game settings with strict validation
         "totalRounds": {
-          ".validate": "newData.isNumber() || newData.val() === 'Infinite'"
+          ".validate": "(newData.isNumber() && newData.val() >= 1 && newData.val() <= 20) || newData.val() === 'Infinite'"
         },
         "difficulty": {
           ".validate": "newData.isString() && (newData.val() === 'Easy' || newData.val() === 'Medium' || newData.val() === 'Hard')"
         },
         "currentRoundNumber": {
-          ".validate": "newData.isNumber() && newData.val() >= 1"
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100"
         },
         
         // Player ready status
         "playerReadyForNext": {
           "$playerId": {
+            ".write": "root.child('games').child($gameId).child('players').hasChild($playerId)",
             ".validate": "newData.isBoolean()"
           }
         },
         
         // Round result validation
         "roundResult": {
-          ".validate": "newData.hasChildren(['consensusStatus', 'totalPointsEarned', 'maxPossiblePoints'])",
+          ".validate": "newData.hasChildren(['consensusStatus', 'totalPointsEarned', 'maxPossiblePoints', 'updatedAt'])",
           "consensusStatus": {
             ".validate": "newData.isString() && (newData.val() === 'common' || newData.val() === 'partial' || newData.val() === 'nonsensical')"
           },
@@ -85,13 +93,19 @@
           },
           "maxPossiblePoints": {
             ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber() && newData.val() <= now"
           }
         },
         
-        // Created timestamp
+        // Created timestamp (write-once)
         "created": {
-          ".validate": "newData.isNumber()"
+          ".validate": "newData.isNumber() && (!data.exists() || data.val() === newData.val())"
         },
+        
+        // Automatically clean up old games (older than 24 hours)
+        ".write": "newData.exists() === false || newData.child('created').val() > (now - 86400000)",
         
         // Deny any other fields
         "$other": {

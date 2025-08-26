@@ -104,6 +104,14 @@ difficultySlider.setAttribute('aria-valuetext', initialDifficulty);
 createGameBtn.addEventListener('click', createGame);
 
 function createGame() {
+  try {
+    // Check rate limit before creating game
+    rateLimiter.checkLimit('gameCreation');
+  } catch (error) {
+    showError(error.message);
+    return;
+  }
+
   // Generate a random 4-letter room code
   gameId = generateRoomCode();
   
@@ -135,21 +143,33 @@ function createGame() {
       players = snapshot.val() || {};
       updatePlayerList();
 
+      // Secure way to handle player names for game objects
       if (commonSenseData && Array.isArray(commonSenseData.objects)) {
-        const playerNameObjects = Object.values(players).map(player => {
-          const name = (player.name || '').toUpperCase();
-          return {
-            text: `${name}?`,
-            deck: "3 - Object",
-            count: 20
-          };
+        const playerNameObjects = [];
+        
+        Object.values(players).forEach(player => {
+          // Additional sanitization and validation
+          const rawName = player.name || '';
+          const safeName = sanitizePlayerName(rawName);
+          
+          if (safeName && safeName.length > 0) {
+            playerNameObjects.push({
+              text: `${safeName}?`,
+              deck: "3 - Object",
+              count: 20
+            });
+          }
         });
 
-        // Avoid duplicates
+        // Remove duplicates and limit count
         const existingTexts = new Set(commonSenseData.objects.map(obj => obj.text));
-        const newObjects = playerNameObjects.filter(obj => !existingTexts.has(obj.text));
+        const newObjects = playerNameObjects
+          .filter(obj => !existingTexts.has(obj.text))
+          .slice(0, 10); // Limit to 10 player-based objects max
 
-        commonSenseData.objects.push(...newObjects);
+        // Replace instead of push to prevent accumulation
+        const baseObjects = commonSenseData.objects.filter(obj => !obj.deck.includes("Player"));
+        commonSenseData.objects = [...baseObjects, ...newObjects];
       }
     });
     firebaseListeners.push({ ref: gameRef.child('players'), callback: playersListener });
@@ -536,7 +556,8 @@ function updateIntegratedLeaderboard(roundPoints) {
   const tbody = document.createElement('tbody');
   
   sortedPlayers.forEach((playerId, index) => {
-    const playerName = players[playerId] ? players[playerId].name : 'Unknown';
+    const rawPlayerName = players[playerId] ? players[playerId].name : 'Unknown';
+    const playerName = sanitizePlayerName(rawPlayerName);
     const playerScore = playerScores[playerId] || 0;
     const pointsEarned = roundPoints[playerId] || 0;
     const rank = index + 1;
@@ -601,12 +622,13 @@ function updateNextRoundStatus() {
   for (const playerId in players) {
     const playerElement = document.createElement('li');
     playerElement.className = 'player-status-item';
+    const safeName = sanitizePlayerName(players[playerId].name || 'Unknown');
     
     if (playerReadyForNext[playerId]) {
       playerElement.classList.add('answered');
-      playerElement.innerHTML = `<span>${players[playerId].name} ✓</span>`;
+      playerElement.innerHTML = `<span>${safeName} ✓</span>`;
     } else {
-      playerElement.innerHTML = `<span>${players[playerId].name} ...</span>`;
+      playerElement.innerHTML = `<span>${safeName} ...</span>`;
     }
     
     playerReadyStatusElement.appendChild(playerElement);
@@ -654,7 +676,8 @@ function showGameEnd() {
   `;
   
   sortedPlayers.forEach((playerId, index) => {
-    const playerName = players[playerId] ? players[playerId].name : 'Unknown';
+    const rawPlayerName = players[playerId] ? players[playerId].name : 'Unknown';
+    const playerName = sanitizePlayerName(rawPlayerName);
     const playerScore = playerScores[playerId] || 0;
     const rank = index + 1;
     
@@ -755,6 +778,18 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// New function for additional player name sanitization
+function sanitizePlayerName(name) {
+  if (typeof name !== 'string') return '';
+  
+  // Remove any potential injection patterns
+  return name
+    .replace(/[<>\"'&{}[\]]/g, '') // Remove HTML/JS injection chars
+    .replace(/\s+/g, ' ')          // Normalize whitespace
+    .trim()
+    .substring(0, 15);             // Enforce length limit
+}
+
 function updatePlayerList() {
   playerCountElement.textContent = Object.keys(players).length;
   playerListElement.innerHTML = '';
@@ -762,7 +797,8 @@ function updatePlayerList() {
   for (const playerId in players) {
     const playerElement = document.createElement('div');
     playerElement.className = 'player-item';
-    playerElement.textContent = sanitizeInput(players[playerId].name || 'Unknown');
+    const safeName = sanitizePlayerName(players[playerId].name || 'Unknown');
+    playerElement.textContent = safeName;
     playerListElement.appendChild(playerElement);
   }
   
@@ -782,12 +818,13 @@ function updatePlayerStatus() {
   for (const playerId in players) {
     const playerElement = document.createElement('li');
     playerElement.className = 'player-status-item';
+    const safeName = sanitizePlayerName(players[playerId].name || 'Unknown');
     
     if (playerAnswers[playerId]) {
       playerElement.classList.add('answered');
-      playerElement.innerHTML = `<span>${players[playerId].name} ✓</span>`;
+      playerElement.innerHTML = `<span>${safeName} ✓</span>`;
     } else {
-      playerElement.innerHTML = `<span>${players[playerId].name} ...</span>`;
+      playerElement.innerHTML = `<span>${safeName} ...</span>`;
     }
     
     playerStatusElement.appendChild(playerElement);

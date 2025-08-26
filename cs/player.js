@@ -51,15 +51,39 @@ function sanitizeInput(input) {
 }
 
 function validatePlayerName(name) {
-  if (!name || name.length === 0) {
+  if (!name || typeof name !== 'string') {
     return 'Please enter your name';
   }
+  
+  if (name.length === 0) {
+    return 'Please enter your name';
+  }
+  
   if (name.length > 15) {
     return 'Name must be 15 characters or less';
   }
+  
+  // More strict pattern - only alphanumeric, spaces, hyphens, underscores
   if (!/^[a-zA-Z0-9\s\-_]+$/.test(name)) {
     return 'Name can only contain letters, numbers, spaces, hyphens, and underscores';
   }
+  
+  // Prevent names that look like system commands or injection attempts
+  const forbidden = ['admin', 'system', 'null', 'undefined', 'function', 'script', 'eval', 'constructor', 'prototype'];
+  if (forbidden.some(word => name.toLowerCase().includes(word))) {
+    return 'Please choose a different name';
+  }
+  
+  // Prevent excessive repeated characters
+  if (/(.)\1{4,}/.test(name)) {
+    return 'Please avoid excessive repeated characters';
+  }
+  
+  // Prevent names that are just numbers or special chars
+  if (/^[\d\s\-_]+$/.test(name)) {
+    return 'Name must contain at least one letter';
+  }
+  
   return null;
 }
 
@@ -74,6 +98,14 @@ function validateRoomCode(code) {
 }
 
 function joinGame() {
+  try {
+    // Check rate limit before joining
+    rateLimiter.checkLimit('gameJoining');
+  } catch (error) {
+    showJoinError(error.message);
+    return;
+  }
+
   const rawName = nameInput.value.trim();
   const rawRoomCode = roomInput.value.trim().toUpperCase();
   
@@ -296,6 +328,14 @@ function createAnswerForm() {
 
 // Submit answer
 function submitPlayerAnswer() {
+  try {
+    // Check rate limit before submitting
+    rateLimiter.checkLimit('answerSubmission');
+  } catch (error) {
+    showJoinError(error.message);
+    return;
+  }
+
   if (!currentRound || !playerId || !gameId) return;
   
   // Collect answers from form
@@ -313,7 +353,14 @@ function submitPlayerAnswer() {
       select.style.borderColor = '#e74c3c';
     } else {
       select.style.borderColor = '#ddd';
-      answers[sense] = value;
+      // Sanitize the answer value
+      const sanitizedValue = sanitizeInput(value);
+      if (sanitizedValue && sanitizedValue.length > 0) {
+        answers[sense] = sanitizedValue;
+      } else {
+        allAnswered = false;
+        select.style.borderColor = '#e74c3c';
+      }
     }
   });
   
@@ -467,7 +514,8 @@ function showGameEnd(playerScores, allPlayers) {
   `;
   
   sortedPlayers.forEach((pid, index) => {
-    const playerName = allPlayers && allPlayers[pid] ? allPlayers[pid].name : 'Unknown';
+    const rawPlayerName = allPlayers && allPlayers[pid] ? allPlayers[pid].name : 'Unknown';
+    const playerName = sanitizeInput(rawPlayerName);
     const playerScore = playerScores[pid] || 0;
     const rank = index + 1;
     

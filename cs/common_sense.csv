@@ -1,19 +1,19 @@
 text,deck,count
-What COLOR is,1 - Category,2
+What COLOR is,1 - Category,3
 What TEXTURE is,1 - Category,2
 What TASTE is,1 - Category,2
 What SMELL is,1 - Category,2
-What COLOR and TEXTURE are,1 - Category,1
-What COLOR and TASTE are,1 - Category,1
-What COLOR and SMELL are,1 - Category,1
+What COLOR and TEXTURE are,1 - Category,2
+What COLOR and TASTE are,1 - Category,2
+What COLOR and SMELL are,1 - Category,2
 What TEXTURE and TASTE are,1 - Category,1
 What TEXTURE and SMELL are,1 - Category,1
 What TASTE and SMELL are,1 - Category,1
-"What COLOR, TEXTURE, and TASTE are",1 - Category,1
-"What COLOR, TASTE, and SMELL are",1 - Category,1
+"What COLOR, TEXTURE, and TASTE are",1 - Category,2
+"What COLOR, TASTE, and SMELL are",1 - Category,2
 "What TEXTURE, TASTE, and SMELL are",1 - Category,1
 What VOLUME is,1 - Category,2
-What VOLUME and COLOR are,1 - Category,1
+What VOLUME and COLOR are,1 - Category,2
 What VOLUME and TASTE are,1 - Category,1
 What VOLUME and TEXTURE are,1 - Category,1
 What VOLUME and SMELL are,1 - Category,1
@@ -39,7 +39,7 @@ DANGER?,3 - Object,1
 CHEEK KISS?,3 - Object,1
 BABY?,3 - Object,1
 BLISS?,3 - Object,1
-ROYALTY / ROYAL FAMILY?,3 - Object,1
+ROYALTY?,3 - Object,1
 SUB-SAHARAN AFRICA?,3 - Object,1
 AMERICAN DREAM?,3 - Object,1
 ARTIFICIAL?,3 - Object,1
@@ -98,3 +98,76 @@ FORGIVENESS?,3 - Object,1
 STANDARDIZED TEST?,3 - Object,1
 BREAKFAST?,3 - Object,1
 TIME?,3 - Object,1
+TENSE?,3 - Object,1
+MID-AFTERNOON?,3 - Object,1
+CHEMISTRY?,3 - Object,1
+TRAPEZOID?,3 - Object,1
+SUPPLY CHAIN LOGISTICS?,3 - Object,1
+GAMER?,3 - Object,1
+POETIC?,3 - Object,1
+PERSONAL ASSISTANT?,3 - Object,1
+GENERATIVE AI?,3 - Object,1
+BOARD GAME?,3 - Object,1
+FRIENDSHIP?,3 - Object,1
+SODA?,3 - Object,1
+SKILLFUL?,3 - Object,1
+LIBRARY?,3 - Object,1
+PRODUCTIVITY?,3 - Object,1
+COMMUNE?,3 - Object,1
+PORTA-POTTY?,3 - Object,1
+VITAL ORGAN?,3 - Object,1
+RUSSIAN NESTING DOLL?,3 - Object,1
+CARPET?,3 - Object,1
+UNICORN?,3 - Object,1
+CHILDHOOD MEMORY?,3 - Object,1
+WATER PARK?,3 - Object,1
+CAPITALISM?,3 - Object,1
+PETTING ZOO?,3 - Object,1
+AIR FRESHENER?,3 - Object,1
+COUP D'ETAT?,3 - Object,1
+WEEKEND HIKE?,3 - Object,1
+DOLLHOUSE?,3 - Object,1
+GETTING FIRED?,3 - Object,1
+RAINBOOTS?,3 - Object,1
+BOYFRIEND'S HOODIE?,3 - Object,1
+AUSTRALIA?,3 - Object,1
+VACATION?,3 - Object,1
+HOLY?,3 - Object,1
+DISARMING?,3 - Object,1
+SPA?,3 - Object,1
+HIP-HOP?,3 - Object,1
+GRAFFITI?,3 - Object,1
+LOVE NOTE?,3 - Object,1
+GRANDMA?,3 - Object,1
+ZANY?,3 - Object,1
+ECONOMIC RECESSION?,3 - Object,1
+WALLET?,3 - Object,1
+PHONE CASE?,3 - Object,1
+COFFEE SHOP?,3 - Object,1
+TWILIGHT (THE MOVIE)?,3 - Object,1
+BIBLE?,3 - Object,1
+HIGH FIVE?,3 - Object,1
+PHANTOM OF THE OPERA?,3 - Object,1
+THEATER KID?,3 - Object,1
+CLEANUP ON AISLE 3?,3 - Object,1
+SPONGE?,3 - Object,1
+BUTTERFLY?,3 - Object,1
+KNOCK KNOCK JOKE?,3 - Object,1
+CIGARETTE?,3 - Object,1
+HACKER?,3 - Object,1
+SHOPPING?,3 - Object,1
+GNOME?,3 - Object,1
+DRAGON?,3 - Object,1
+CLEANING COMPANY?,3 - Object,1
+CRIME?,3 - Object,1
+UNNECESSARY?,3 - Object,1
+GARAGE SALE?,3 - Object,1
+FALSE?,3 - Object,1
+ANXIETY?,3 - Object,1
+SUPER VILLAIN?,3 - Object,1
+PIXAR?,3 - Object,1
+CROCHET?,3 - Object,1
+MYSTERY?,3 - Object,1
+HEAVY?,3 - Object,1
+LIGHT? (AS IN NOT HEAVY),3 - Object,1
+SECRET?,3 - Object,1

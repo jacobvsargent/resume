@@ -9,7 +9,25 @@ const firebaseConfig = {
     messagingSenderId: "343190251506",
     appId: "1:343190251506:web:8636048879ef422a74ed6b",
     measurementId: "G-NZP8ZQZCWZ"
-  };
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+};
+
+// Enhanced error handling for Firebase initialization
+try {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    // Test connection and handle offline scenarios
+    db.ref('.info/connected').on('value', (snapshot) => {
+        if (snapshot.val() === true) {
+            console.log('✅ Connected to Firebase');
+        } else {
+            console.warn('⚠️ Disconnected from Firebase');
+            // Could show user notification here
+        }
+    });
+    
+} catch (error) {
+    console.error('❌ Firebase initialization failed:', error);
+    // Show user-friendly error message
+    document.body.innerHTML = '<div style="text-align: center; padding: 50px; font-family: Arial;"><h2>Service Temporarily Unavailable</h2><p>Please try again later.</p></div>';
+}
