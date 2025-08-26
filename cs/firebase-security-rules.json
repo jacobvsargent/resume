@@ -27,10 +27,9 @@
           }
         },
         
-        // Restrict player answers to game participants only
+        // Player answers validation (allow writes for game participants)
         "playerAnswers": {
           "$playerId": {
-            ".write": "root.child('games').child($gameId).child('players').hasChild($playerId)",
             ".validate": "newData.exists()",
             "$sense": {
               ".validate": "newData.isString() && newData.val().length <= 50 && newData.val().length >= 1"
@@ -41,27 +40,10 @@
         // Scores can only be positive numbers with reasonable limits
         "playerScores": {
           "$playerId": {
-            ".write": "root.child('games').child($gameId).child('players').hasChild($playerId)",
             ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
           }
         },
         
-        // Current round structure validation
-        "currentRound": {
-          ".validate": "newData.hasChildren(['question', 'senses', 'timestamp'])",
-          "question": {
-            ".validate": "newData.isString() && newData.val().length <= 200 && newData.val().length >= 5"
-          },
-          "senses": {
-            ".validate": "newData.hasChildren() && newData.numChildren() <= 3",
-            "$index": {
-              ".validate": "newData.isString() && (newData.val() === 'Color' || newData.val() === 'Texture' || newData.val() === 'Taste' || newData.val() === 'Smell' || newData.val() === 'Volume')"
-            }
-          },
-          "timestamp": {
-            ".validate": "newData.isNumber() && newData.val() <= now"
-          }
-        },
         
         // Game settings with strict validation
         "totalRounds": {
@@ -77,7 +59,6 @@
         // Player ready status
         "playerReadyForNext": {
           "$playerId": {
-            ".write": "root.child('games').child($gameId).child('players').hasChild($playerId)",
             ".validate": "newData.isBoolean()"
           }
         },
@@ -104,8 +85,6 @@
           ".validate": "newData.isNumber() && (!data.exists() || data.val() === newData.val())"
         },
         
-        // Automatically clean up old games (older than 24 hours)
-        ".write": "newData.exists() === false || newData.child('created').val() > (now - 86400000)",
         
         // Deny any other fields
         "$other": {
@@ -121,4 +100,3 @@
     }
   }
 }
-

@@ -11,10 +11,12 @@ const firebaseConfig = {
     measurementId: "G-NZP8ZQZCWZ"
 };
 
-// Enhanced error handling for Firebase initialization
+// Initialize Firebase with error handling
+let db;
+
 try {
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    db = firebase.database();
     
     // Test connection and handle offline scenarios
     db.ref('.info/connected').on('value', (snapshot) => {
