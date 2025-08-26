@@ -442,20 +442,16 @@ function showResults() {
   const sensesCount = currentRound.senses.length;
   const maxPossiblePoints = playerCount * sensesCount;
   
-  // Update result header based on total points earned
+  // Update result header based on total points earned (binary system)
   let consensusStatus;
   if (totalPointsEarned === 0) {
-    consensusStatus = "nonsensical";
-    resultHeaderElement.textContent = "Nonsensical!";
+    consensusStatus = "nonsense";
+    resultHeaderElement.textContent = "That's Nonsense!";
     resultHeaderElement.className = "failure";
-  } else if (totalPointsEarned === maxPossiblePoints) {
+  } else {
     consensusStatus = "common";
     resultHeaderElement.textContent = "That's Common Sense!";
     resultHeaderElement.className = "success";
-  } else {
-    consensusStatus = "partial";
-    resultHeaderElement.textContent = "Partial Sense...";
-    resultHeaderElement.className = "partial";
   }
   
   // Save consensus status to Firebase for player screens

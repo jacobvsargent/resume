@@ -247,15 +247,12 @@ function setupGameListeners() {
 
     const roundResult = snapshot.val();
     if (roundResult) {
-      // Update the player result header based on consensus status
+      // Update the player result header based on consensus status (binary system)
       if (roundResult.consensusStatus === "common") {
         playerResultHeader.textContent = "That's Common Sense!";
         playerResultHeader.className = "success";
-      } else if (roundResult.consensusStatus === "partial") {
-        playerResultHeader.textContent = "Partial Sense...";
-        playerResultHeader.className = "partial";
       } else {
-        playerResultHeader.textContent = "Nonsensical!";
+        playerResultHeader.textContent = "That's Nonsense!";
         playerResultHeader.className = "failure";
       }
       

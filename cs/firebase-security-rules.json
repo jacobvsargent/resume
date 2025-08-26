@@ -49,9 +49,11 @@
           }
         },
         
-        // Allow round results
+        // Allow round results with consensus validation
         "roundResult": {
-          ".validate": "newData.exists()"
+          "consensusStatus": {
+            ".validate": "newData.isString() && (newData.val() === 'common' || newData.val() === 'nonsense')"
+          }
         },
         
         // Allow other game fields like status, created, etc.
