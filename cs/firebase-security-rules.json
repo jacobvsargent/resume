@@ -2,101 +2,66 @@
   "rules": {
     "games": {
       "$gameId": {
-        // Only allow read/write if game ID matches pattern and has required fields
-        ".read": "$gameId.matches(/^[A-Z]{4}$/) && data.exists()",
-        ".write": "$gameId.matches(/^[A-Z]{4}$/) && (newData.exists() === false || newData.hasChildren(['status', 'created']))",
-        ".validate": "newData.hasChildren(['status', 'created']) && newData.child('created').isNumber()",
+        // Allow read/write for valid 4-letter game codes
+        ".read": "$gameId.matches(/^[A-Z]{4}$/)",
+        ".write": "$gameId.matches(/^[A-Z]{4}$/)",
         
-        // Restrict game status changes
-        "status": {
-          ".validate": "newData.isString() && (newData.val() === 'waiting' || newData.val() === 'active' || newData.val() === 'ended')"
-        },
-        
-        // Player validation with strict limits
+        // Basic player name validation (keep it simple)
         "players": {
           "$playerId": {
-            ".validate": "newData.hasChildren(['name', 'joinedAt'])",
-            ".write": "!data.exists() || data.child('name').val() === newData.child('name').val()",
             "name": {
-              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 15 && newData.val().matches(/^[a-zA-Z0-9\\s\\-_]+$/) && !newData.val().toLowerCase().matches(/(admin|system|null|undefined|function|script|eval|constructor|prototype)/)"
-            },
-            "joinedAt": {
-              ".validate": "newData.isNumber() && newData.val() <= now"
-            },
-            "$other": { ".validate": false }
-          }
-        },
-        
-        // Player answers validation (allow writes for game participants)
-        "playerAnswers": {
-          "$playerId": {
-            ".validate": "newData.exists()",
-            "$sense": {
-              ".validate": "newData.isString() && newData.val().length <= 50 && newData.val().length >= 1"
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 15"
             }
           }
         },
         
-        // Scores can only be positive numbers with reasonable limits
+        // Allow player answers with basic validation
+        "playerAnswers": {
+          "$playerId": {
+            "$sense": {
+              ".validate": "newData.isString() && newData.val().length <= 50"
+            }
+          }
+        },
+        
+        // Allow scores with basic limits
         "playerScores": {
           "$playerId": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 50000"
           }
         },
         
-        
-        // Game settings with strict validation
+        // Allow game settings
         "totalRounds": {
-          ".validate": "(newData.isNumber() && newData.val() >= 1 && newData.val() <= 20) || newData.val() === 'Infinite'"
+          ".validate": "newData.isNumber() || newData.val() === 'Infinite'"
         },
         "difficulty": {
-          ".validate": "newData.isString() && (newData.val() === 'Easy' || newData.val() === 'Medium' || newData.val() === 'Hard')"
+          ".validate": "newData.isString()"
         },
         "currentRoundNumber": {
-          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 100"
+          ".validate": "newData.isNumber() && newData.val() >= 0"
         },
         
-        // Player ready status
+        // Allow player ready status
         "playerReadyForNext": {
           "$playerId": {
-            ".validate": "newData.isBoolean()"
+            ".validate": "newData.isBoolean() || newData.val() === null"
           }
         },
         
-        // Round result validation
+        // Allow round results
         "roundResult": {
-          ".validate": "newData.hasChildren(['consensusStatus', 'totalPointsEarned', 'maxPossiblePoints', 'updatedAt'])",
-          "consensusStatus": {
-            ".validate": "newData.isString() && (newData.val() === 'common' || newData.val() === 'partial' || newData.val() === 'nonsensical')"
-          },
-          "totalPointsEarned": {
-            ".validate": "newData.isNumber() && newData.val() >= 0"
-          },
-          "maxPossiblePoints": {
-            ".validate": "newData.isNumber() && newData.val() >= 0"
-          },
-          "updatedAt": {
-            ".validate": "newData.isNumber() && newData.val() <= now"
-          }
+          ".validate": "newData.exists()"
         },
         
-        // Created timestamp (write-once)
+        // Allow other game fields like status, created, etc.
+        "status": {
+          ".validate": "newData.isString()"
+        },
         "created": {
-          ".validate": "newData.isNumber() && (!data.exists() || data.val() === newData.val())"
-        },
-        
-        
-        // Deny any other fields
-        "$other": {
-          ".validate": false
+          ".validate": "newData.isNumber()"
         }
       }
-    },
-    
-    // Deny access to any other top-level nodes
-    "$other": {
-      ".read": false,
-      ".write": false
     }
   }
 }

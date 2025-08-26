@@ -156,7 +156,7 @@ function createGame() {
             playerNameObjects.push({
               text: `${safeName}?`,
               deck: "3 - Object",
-              count: 20
+              count: 15
             });
           }
         });
