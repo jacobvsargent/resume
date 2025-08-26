@@ -1,9 +1,10 @@
 {
   "rules": {
     "games": {
+      // Allow unrestricted read access for stats and game functionality
+      ".read": true,
       "$gameId": {
-        // Allow read/write for valid 4-letter game codes
-        ".read": "$gameId.matches(/^[A-Z]{4}$/)",
+        // Allow write for valid 4-letter game codes only
         ".write": "$gameId.matches(/^[A-Z]{4}$/)",
         
         // Basic player name validation (keep it simple)
