@@ -247,16 +247,7 @@ function setupGameListeners() {
 
     const roundResult = snapshot.val();
     if (roundResult) {
-      // Update the player result header based on consensus status (binary system)
-      if (roundResult.consensusStatus === "common") {
-        playerResultHeader.textContent = "That's Common Sense!";
-        playerResultHeader.className = "success";
-      } else {
-        playerResultHeader.textContent = "That's Nonsense!";
-        playerResultHeader.className = "failure";
-      }
-      
-      
+      // Get player answers and show results (header will be set based on individual performance)
       Promise.all([
         db.ref(`games/${gameId}/playerAnswers`).once('value'),
         db.ref(`games/${gameId}/players`).once('value')
@@ -443,15 +434,45 @@ function showPlayerResults(allAnswers, allPlayers) {
     });
   }
   
+  // Calculate individual player score for this round and update header
+  const myAnswers = allAnswers[playerId] || {};
+  let playerScoredPoints = false;
+  
+  // Check if this player scored any points this round
+  for (const sense in myAnswers) {
+    let matchCount = 0;
+    
+    for (const pid in allAnswers) {
+      if (pid === playerId) continue;
+      
+      if (allAnswers[pid][sense] === myAnswers[sense]) {
+        matchCount++;
+      }
+    }
+    
+    if (matchCount > 0) {
+      playerScoredPoints = true;
+      break; // Found at least one match, no need to check further
+    }
+  }
+  
+  // Update header based on individual player performance
+  if (playerScoredPoints) {
+    playerResultHeader.textContent = "That's Common Sense!";
+    playerResultHeader.className = "success";
+  } else {
+    playerResultHeader.textContent = "Nonsense!";
+    playerResultHeader.className = "failure";
+  }
+
   // Show player's answers
   playerResults.innerHTML = '';
-  const myAnswers = allAnswers[playerId] || {};
   
   for (const sense in myAnswers) {
     const resultItem = document.createElement('div');
     resultItem.className = 'result-item';
     
-    // Check if this sense has a match with all other players
+    // Check if this sense has a match with other players
     let matchCount = 0;
     let totalPlayers = 0;
     
