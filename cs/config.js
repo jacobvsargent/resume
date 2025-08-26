@@ -12,6 +12,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase with error handling
+// Test
 let db;
 
 try {
